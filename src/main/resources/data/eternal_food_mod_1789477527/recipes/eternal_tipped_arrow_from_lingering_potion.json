@@ -1,0 +1,15 @@
+{
+  "type": "eternal_food_mod_1789477527:crafting_shapeless_with_tipped_arrow_effects",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "eternal_food_mod_1789477527:eternal_lingering_potion"
+    },
+    {
+      "item": "minecraft:arrow"
+    }
+  ],
+  "result": {
+    "item": "eternal_food_mod_1789477527:eternal_tipped_arrow"
+  }
+}

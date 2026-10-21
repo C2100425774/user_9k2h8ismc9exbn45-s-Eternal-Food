@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "eternal_food_mod_1789477527:eternal_pufferfish"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_rotten_flesh"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_chicken"
+    }
+  ],
+  "result": {
+    "item": "eternal_food_mod_1789477527:eternal_abyss"
+  }
+}

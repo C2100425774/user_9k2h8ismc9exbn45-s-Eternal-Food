@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "food",
+  "cookingtime": 200,
+  "experience": 0.35,
+  "ingredient": {
+    "item": "eternal_food_mod_1789477527:eternal_porkchop"
+  },
+  "result": "eternal_food_mod_1789477527:eternal_cooked_porkchop"
+}

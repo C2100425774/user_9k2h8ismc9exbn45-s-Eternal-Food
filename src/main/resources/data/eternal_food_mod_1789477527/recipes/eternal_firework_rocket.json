@@ -1,0 +1,15 @@
+{
+  "type": "eternal_food_mod_1789477527:crafting_shapeless_with_firework_effects",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:firework_rocket"
+    },
+    {
+      "item": "minecraft:nether_star"
+    }
+  ],
+  "result": {
+    "item": "eternal_food_mod_1789477527:eternal_firework_rocket"
+  }
+}

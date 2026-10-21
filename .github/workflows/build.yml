@@ -1,0 +1,35 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # 车万女仆只在编译期用到，从 Modrinth 的 CDN 拉一份（不加速、不缓存，避免链接失效时用到旧文件）
+      - name: Fetch Touhou Little Maid (compileOnly)
+        run: |
+          mkdir -p libs
+          curl -fL --retry 3 -o "libs/touhoulittlemaid-1.5.3-forge+mc1.20.1.jar" \
+            "https://cdn.modrinth.com/data/R0bDWFAW/versions/g1SKoGQJ/touhoulittlemaid-1.5.3-forge%2Bmc1.20.1.jar"
+
+      - name: Build
+        run: ./gradlew build --no-daemon
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: eternal_food_mod
+          path: build/libs/*.jar

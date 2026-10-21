@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "eternal_food_mod_1789477527:item/tipped_arrow_head",
+    "layer1": "eternal_food_mod_1789477527:item/eternal_tipped_arrow_base"
+  }
+}

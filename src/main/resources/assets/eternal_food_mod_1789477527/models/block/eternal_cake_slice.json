@@ -1,0 +1,22 @@
+{
+  "textures": {
+    "particle": "eternal_food_mod_1789477527:block/eternal_cake_side",
+    "bottom": "eternal_food_mod_1789477527:block/eternal_cake_bottom",
+    "top": "eternal_food_mod_1789477527:block/eternal_cake_top",
+    "side": "eternal_food_mod_1789477527:block/eternal_cake_side"
+  },
+  "elements": [
+    {
+      "from": [1, 0, 1],
+      "to": [15, 8, 15],
+      "faces": {
+        "down":  { "texture": "#bottom", "cullface": "down" },
+        "up":    { "texture": "#top" },
+        "north": { "texture": "#side" },
+        "south": { "texture": "#side" },
+        "west":  { "texture": "#side" },
+        "east":  { "texture": "#side" }
+      }
+    }
+  ]
+}

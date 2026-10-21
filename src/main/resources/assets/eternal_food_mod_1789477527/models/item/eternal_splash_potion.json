@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "eternal_food_mod_1789477527:item/potion_overlay",
+    "layer1": "eternal_food_mod_1789477527:item/eternal_splash_potion"
+  }
+}

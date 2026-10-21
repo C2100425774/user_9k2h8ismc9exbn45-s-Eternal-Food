@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "cn.autoforged.eternal_food_mod_1789477527.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "eternal_food_mod_1789477527.refmap.json",
+  "mixins": [
+    "BrewingStandBlockEntityMixin",
+    "BrewingStandFuelSlotMixin",
+    "CrossbowItemMixin",
+    "PlayerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

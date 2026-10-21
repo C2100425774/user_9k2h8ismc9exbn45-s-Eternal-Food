@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8.5",
+  "package": "cn.autoforged.eternal_food_mod_1789477527.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "eternal_food_mod_1789477527.refmap.json",
+  "mixins": [
+    "InventoryVehicleEntityMixin",
+    "EntityMaidTemptationMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

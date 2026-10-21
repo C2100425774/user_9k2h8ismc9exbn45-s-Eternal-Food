@@ -1,0 +1,36 @@
+# ---------- Gradle / 构建产物 ----------
+.gradle/
+build/
+run/
+run-data/
+src/generated/resources/
+
+# Gradle wrapper 的 jar 必须入库，别被下面的 *.jar 规则吃掉
+!gradle/wrapper/gradle-wrapper.jar
+
+# ---------- 第三方编译期依赖 ----------
+# 车万女仆的 jar：体积 24MB 且版权不属于本项目，不入库（见 libs/README.md）
+libs/*.jar
+
+# 其余 jar 产物
+*.jar
+
+# ---------- IDE ----------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# ---------- 系统 ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 日志 ----------
+logs/
+crash-reports/
+*.log

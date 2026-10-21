@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "eternal_food_mod_1789477527:item/eternal_full_domain"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "eternal_food_mod_1789477527:eternal_cooked_beef"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_golden_carrot"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_cooked_porkchop"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_cake_slice"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_cooked_mutton"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_baked_potato"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_cooked_cod"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_pumpkin_pie"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_melon_slice"
+    }
+  ],
+  "result": {
+    "item": "eternal_food_mod_1789477527:eternal_fish"
+  }
+}

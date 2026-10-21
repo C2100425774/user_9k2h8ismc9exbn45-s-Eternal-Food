@@ -1,0 +1,145 @@
+plugins {
+    id 'idea'
+    id 'eclipse'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+minecraft {
+    mappings channel: mapping_channel, version: mapping_version
+
+    // BrewingStandBlockEntity.fuel 等包级私有字段的访问权
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    copyIdeResources = true
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            args '--nogui'
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', mod_id,
+                 '--all',
+                 '--output', file('src/generated/resources/'),
+                 '--existing', file('src/main/resources/')
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+}
+
+repositories {
+    maven {
+        name = 'MinecraftForge'
+        url = 'https://maven.minecraftforge.net/'
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 车万女仆编译期依赖
+// 说明：TLM 没有公开的 Maven 坐标，所以用本地 jar（见 README「如何构建」）。
+// 没放 jar 时依然可以跑 wrapper / bumpVersion，但真正构建会给出明确提示。
+// ---------------------------------------------------------------------------
+def maidJar = file('libs/touhoulittlemaid-1.5.3-forge+mc1.20.1.jar')
+def maidDownloadHint = '''
+缺少车万女仆编译依赖: libs/touhoulittlemaid-1.5.3-forge+mc1.20.1.jar
+请到 https://modrinth.com/mod/touhou-little-maid/versions 下载 1.20.1 Forge 版 1.5.3,
+把 jar 改名成 touhoulittlemaid-1.5.3-forge+mc1.20.1.jar 放进 libs/ 目录。
+（只是编译期依赖，不会打进本模组的 jar。）
+'''
+gradle.taskGraph.whenReady { graph ->
+    def needsCompile = graph.allTasks.any { it.name in ['compileJava', 'jar', 'reobfJar', 'build', 'assemble'] }
+    if (needsCompile && !maidJar.exists()) {
+        throw new GradleException(maidDownloadHint.trim())
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // 车万女仆（Touhou Little Maid）—— 只用于编译期：实现它的 ILittleMaid 扩展、
+    // 注册「女仆可食用方块」。运行期没有这个 mod 也不会崩，因为相关类只在 TLM 扫描到
+    // @LittleMaidExtension 时才会被它加载。
+    //
+    // jar 不进版本库（第三方二进制），按 README 说明下载后放到 libs/ 即可。
+    compileOnly files(maidJar)
+}
+
+tasks.named('jar', Jar).configure {
+    // 产物名：eternal_food_mod-<版本>.jar
+    // 不带中文、不带方括号 —— CurseForge / MC百科 对文件名有要求。
+    // 注意：这里只影响 jar 文件名，modId / 注册名始终是 eternal_food_mod_1789477527，不会变。
+    archiveFileName = "${archive_base}-${mod_version}.jar"
+    manifest {
+        attributes([
+            'Specification-Title'    : mod_id,
+            'Specification-Vendor'   : mod_authors,
+            'Specification-Version'  : '1',
+            'Implementation-Title'   : project.name,
+            'Implementation-Version' : project.jar.archiveVersion,
+            'Implementation-Vendor'  : mod_authors,
+            // Forge 从这里读取 Mixin 配置
+            'MixinConfigs'           : "${mod_id}.mixins.json,${mod_id}.compat.mixins.json"
+        ] as Map<String, Object>)
+    }
+    // 把 Java 源码一并打进 jar，保证发布物始终可审计、可回溯
+    from sourceSets.main.java
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+// 版本号规则：第 2 位留给大更新/新内容，第 3 位是日常小改动与修 bug。
+// 所以 bumpVersion 只递增第 3 位：1.4.4 -> 1.4.5。大更新请手动改 gradle.properties。
+tasks.register('bumpVersion') {
+    group = 'versioning'
+    description = '把 mod_version 的修订号 +1（1.4.5 -> 1.4.6），前两位不动'
+    doLast {
+        def f = file('gradle.properties')
+        def text = f.getText('UTF-8')
+        def cur = (text =~ /(?m)^mod_version=(.+)$/)
+        if (!cur.find()) throw new GradleException('gradle.properties 里找不到 mod_version')
+        def parts = cur.group(1).trim().split('\\.')
+        if (parts.length < 3) throw new GradleException('mod_version 需要 x.y.z 三段')
+        def next = "${parts[0]}.${parts[1]}.${(parts[2] as int) + 1}"
+        f.write(text.replaceFirst(/(?m)^mod_version=.+$/, "mod_version=${next}"), 'UTF-8')
+        println "mod_version: ${cur.group(1).trim()} -> ${next}"
+    }
+}

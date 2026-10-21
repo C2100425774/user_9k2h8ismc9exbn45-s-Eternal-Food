@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_eternal_rabbit": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "eternal_food_mod_1789477527:eternal_rabbit"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "eternal_food_mod_1789477527:eternal_cooked_rabbit_from_campfire_cooking"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_eternal_rabbit",
+      "has_the_recipe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "eternal_food_mod_1789477527:eternal_cooked_rabbit_from_campfire_cooking"
+    ]
+  },
+  "sends_telemetry_event": false
+}

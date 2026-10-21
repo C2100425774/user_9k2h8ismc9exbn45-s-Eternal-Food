@@ -1,0 +1,15 @@
+{
+  "type": "eternal_food_mod_1789477527:crafting_shapeless_with_stew_effects",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:suspicious_stew"
+    },
+    {
+      "item": "minecraft:nether_star"
+    }
+  ],
+  "result": {
+    "item": "eternal_food_mod_1789477527:eternal_suspicious_stew"
+  }
+}

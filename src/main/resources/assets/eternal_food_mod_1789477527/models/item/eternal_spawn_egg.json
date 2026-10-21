@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "eternal_food_mod_1789477527:item/eternal_spawn_egg",
+    "layer1": "eternal_food_mod_1789477527:item/spawn_egg",
+    "layer2": "eternal_food_mod_1789477527:item/spawn_egg_overlay"
+  }
+}

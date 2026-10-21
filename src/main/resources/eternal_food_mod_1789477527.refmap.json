@@ -1,0 +1,54 @@
+{
+  "mappings": {
+    "cn/autoforged/eternal_food_mod_1789477527/mixin/InventoryVehicleEntityMixin": {
+      "Lnet/minecraft/world/item/ItemStack;shrink(I)V": "Lnet/minecraft/world/item/ItemStack;m_41774_(I)V"
+    },
+    "cn/autoforged/eternal_food_mod_1789477527/mixin/BrewingStandFuelSlotMixin": {
+      "net.minecraft.world.inventory.BrewingStandMenu$FuelSlot": "net/minecraft/world/inventory/BrewingStandMenu$FuelSlot",
+      "mayPlaceItem": "Lnet/minecraft/world/inventory/BrewingStandMenu$FuelSlot;m_39112_(Lnet/minecraft/world/item/ItemStack;)Z"
+    },
+    "cn/autoforged/eternal_food_mod_1789477527/mixin/PlayerMixin": {
+      "canEat": "Lnet/minecraft/world/entity/player/Player;m_36391_(Z)Z"
+    },
+    "cn/autoforged/eternal_food_mod_1789477527/mixin/CrossbowItemMixin": {
+      "shootProjectile": "Lnet/minecraft/world/item/CrossbowItem;m_40894_(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;FZFFF)V",
+      "getSupportedHeldProjectiles": "Lnet/minecraft/world/item/CrossbowItem;m_6442_()Ljava/util/function/Predicate;",
+      "getAllSupportedProjectiles": "Lnet/minecraft/world/item/CrossbowItem;m_6437_()Ljava/util/function/Predicate;",
+      "Lnet/minecraft/world/item/CrossbowItem;containsChargedProjectile(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/Item;)Z": "Lnet/minecraft/world/item/CrossbowItem;m_40871_(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/Item;)Z",
+      "Lnet/minecraft/world/item/ItemStack;is(Lnet/minecraft/world/item/Item;)Z": "Lnet/minecraft/world/item/ItemStack;m_150930_(Lnet/minecraft/world/item/Item;)Z",
+      "getShootingPower": "Lnet/minecraft/world/item/CrossbowItem;m_40945_(Lnet/minecraft/world/item/ItemStack;)F"
+    },
+    "cn/autoforged/eternal_food_mod_1789477527/mixin/BrewingStandBlockEntityMixin": {
+      "fuel": "f_58979_:I",
+      "canPlaceItem": "Lnet/minecraft/world/level/block/entity/BrewingStandBlockEntity;m_7013_(ILnet/minecraft/world/item/ItemStack;)Z",
+      "serverTick": "Lnet/minecraft/world/level/block/entity/BrewingStandBlockEntity;m_155285_(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BrewingStandBlockEntity;)V"
+    }
+  },
+  "data": {
+    "searge": {
+      "cn/autoforged/eternal_food_mod_1789477527/mixin/InventoryVehicleEntityMixin": {
+        "Lnet/minecraft/world/item/ItemStack;shrink(I)V": "Lnet/minecraft/world/item/ItemStack;m_41774_(I)V"
+      },
+      "cn/autoforged/eternal_food_mod_1789477527/mixin/BrewingStandFuelSlotMixin": {
+        "net.minecraft.world.inventory.BrewingStandMenu$FuelSlot": "net/minecraft/world/inventory/BrewingStandMenu$FuelSlot",
+        "mayPlaceItem": "Lnet/minecraft/world/inventory/BrewingStandMenu$FuelSlot;m_39112_(Lnet/minecraft/world/item/ItemStack;)Z"
+      },
+      "cn/autoforged/eternal_food_mod_1789477527/mixin/PlayerMixin": {
+        "canEat": "Lnet/minecraft/world/entity/player/Player;m_36391_(Z)Z"
+      },
+      "cn/autoforged/eternal_food_mod_1789477527/mixin/CrossbowItemMixin": {
+        "shootProjectile": "Lnet/minecraft/world/item/CrossbowItem;m_40894_(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;FZFFF)V",
+        "getSupportedHeldProjectiles": "Lnet/minecraft/world/item/CrossbowItem;m_6442_()Ljava/util/function/Predicate;",
+        "getAllSupportedProjectiles": "Lnet/minecraft/world/item/CrossbowItem;m_6437_()Ljava/util/function/Predicate;",
+        "Lnet/minecraft/world/item/CrossbowItem;containsChargedProjectile(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/Item;)Z": "Lnet/minecraft/world/item/CrossbowItem;m_40871_(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/Item;)Z",
+        "Lnet/minecraft/world/item/ItemStack;is(Lnet/minecraft/world/item/Item;)Z": "Lnet/minecraft/world/item/ItemStack;m_150930_(Lnet/minecraft/world/item/Item;)Z",
+        "getShootingPower": "Lnet/minecraft/world/item/CrossbowItem;m_40945_(Lnet/minecraft/world/item/ItemStack;)F"
+      },
+      "cn/autoforged/eternal_food_mod_1789477527/mixin/BrewingStandBlockEntityMixin": {
+      "fuel": "f_58979_:I",
+        "canPlaceItem": "Lnet/minecraft/world/level/block/entity/BrewingStandBlockEntity;m_7013_(ILnet/minecraft/world/item/ItemStack;)Z",
+        "serverTick": "Lnet/minecraft/world/level/block/entity/BrewingStandBlockEntity;m_155285_(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/BrewingStandBlockEntity;)V"
+      }
+    }
+  }
+}
