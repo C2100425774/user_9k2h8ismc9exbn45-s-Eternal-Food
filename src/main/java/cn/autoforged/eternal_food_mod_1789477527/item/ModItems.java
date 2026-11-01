@@ -41,13 +41,18 @@ public class ModItems {
     // 注册名保持 eternal_cake_slice 不变：旧存档里的永恒蛋糕物品升级后直接变成这个方块物品，不会丢失。
     // 食用不再靠物品，而是放下方块后右键方块（营养 14 / 饱和系数 0.1，方块不消耗）。
     public static final RegistryObject<Item> ETERNAL_CAKE_SLICE = ITEMS.register("eternal_cake_slice",
-            () -> new BlockItem(ModBlocks.ETERNAL_CAKE.get(),
+            () -> new EternalCakeBlockItem(ModBlocks.ETERNAL_CAKE.get(),
                     new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
 
     static {
         // 仍保留「原版蛋糕 + 下界之星 → 永恒蛋糕」的配方映射（配方 JSON 见 ModRecipeProvider）。
         ETERNAL_TO_BASE.put(ETERNAL_CAKE_SLICE, Items.CAKE);
     }
+
+    /** 永恒数字钟的物品形态：平面图标，普通右键看时间，潜行 + 右键才放置成方块。 */
+    public static final RegistryObject<Item> ETERNAL_CLOCK = ITEMS.register("eternal_clock",
+            () -> new EternalClockItem(ModBlocks.ETERNAL_CLOCK.get(),
+                    new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
     public static final RegistryObject<Item> ETERNAL_PUMPKIN_PIE = food("eternal_pumpkin_pie", Items.PUMPKIN_PIE);
     public static final RegistryObject<Item> ETERNAL_CARROT = food("eternal_carrot", Items.CARROT);
     public static final RegistryObject<Item> ETERNAL_GOLDEN_CARROT = food("eternal_golden_carrot", Items.GOLDEN_CARROT);
@@ -65,12 +70,26 @@ public class ModItems {
     // alwaysEat：由原版 Foods.CHORUS_FRUIT 继承而来，满饥饿 / 满饱和度时仍可食用。此处显式保留。
     public static final RegistryObject<Item> ETERNAL_CHORUS_FRUIT = special("eternal_chorus_fruit", Items.CHORUS_FRUIT,
             new FoodProperties.Builder().nutrition(4).saturationMod(0.3F).alwaysEat().build());
-    // 永恒紫颂果plus：由永恒紫颂果 + 末影珍珠 + 龙息无序合成（配方见 ModRecipeProvider）。
-    // 食用后无论身处哪个维度都传送到自己的出生点（见 EternalChorusFruitPlusItem），食用不消耗、无冷却。
-    // 没有对应的原版基础食物，因此不进入 ETERNAL_TO_BASE。营养 / 饱和度沿用紫颂果（4 / 0.1）。
-    public static final RegistryObject<Item> ETERNAL_CHORUS_FRUIT_PLUS = ITEMS.register("eternal_chorus_fruit_plus",
-            () -> new EternalChorusFruitPlusItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)
-                    .food(new FoodProperties.Builder().nutrition(4).saturationMod(0.1F).alwaysEat().build())));
+    // 永恒紫颂果plus 三个变体（见 EternalChorusFruitPlusItem）：
+    //   复活点 = 永恒紫颂果 + 末影珍珠 + 龙息 + 指南针 → 传送到个人重生点
+    //   生成点 = 复活点 在合成台转换 → 传送到世界出生点
+    //   绑定   = 拿复活点/生成点右键磁石 → 传送到磁石坐标（y+1），不可二次绑定
+    // 食用速度与干海带一致（16 tick）；营养 / 饱和度沿用紫颂果（4 / 0.1）。
+    // 都没有对应的原版基础食物，因此不进入 ETERNAL_TO_BASE。
+    public static final RegistryObject<Item> ETERNAL_CHORUS_FRUIT_PLUS =
+            ITEMS.register("eternal_chorus_fruit_plus",
+                    () -> new EternalChorusFruitPlusItem(chorusPlusProperties(),
+                            EternalChorusFruitPlusItem.Mode.RESPAWN));
+
+    public static final RegistryObject<Item> ETERNAL_CHORUS_FRUIT_PLUS_SPAWN =
+            ITEMS.register("eternal_chorus_fruit_plus_spawn",
+                    () -> new EternalChorusFruitPlusItem(chorusPlusProperties(),
+                            EternalChorusFruitPlusItem.Mode.WORLD_SPAWN));
+
+    public static final RegistryObject<Item> ETERNAL_CHORUS_FRUIT_PLUS_BIND =
+            ITEMS.register("eternal_chorus_fruit_plus_bind",
+                    () -> new EternalChorusFruitPlusItem(chorusPlusProperties(),
+                            EternalChorusFruitPlusItem.Mode.BOUND));
     public static final RegistryObject<Item> ETERNAL_MUSHROOM_STEW = food("eternal_mushroom_stew", Items.MUSHROOM_STEW);
     // 永恒红蘑菇 / 永恒棕蘑菇：食用速度与干海带一致（16 tick），各回复 1 饥饿值、1 饱和度
     //（实际饱和度 = nutrition × saturationMod × 2，故 nutrition 1 + saturationMod 0.5）。
@@ -302,6 +321,13 @@ public class ModItems {
                         new Item.Properties().stacksTo(1).rarity(Rarity.RARE).food(food), false, hintKey));
         ETERNAL_TO_BASE.put(registered, base);
         return registered;
+    }
+
+    /** 三个永恒紫颂果 plus 变体共用的物品属性：单堆叠、稀有、4 饥饿值 / 0.1 饱和、快速进食、满饥饿可食。 */
+    private static Item.Properties chorusPlusProperties() {
+        return new Item.Properties().stacksTo(1).rarity(Rarity.RARE)
+                .food(new FoodProperties.Builder().nutrition(4).saturationMod(0.1F).fast()
+                        .alwaysEat().build());
     }
 
     public static void register(IEventBus modEventBus) {

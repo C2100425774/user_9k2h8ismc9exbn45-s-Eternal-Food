@@ -28,7 +28,7 @@
 ## 构建
 
 ```bash
-git clone <本仓库地址>
+git clone https://github.com/C2100425774/user_9k2h8ismc9exbn45-s-Eternal-Food
 cd eternal_food_mod
 
 # 1) 先准备车万女仆的编译期依赖（见 libs/README.md）

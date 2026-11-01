@@ -14,7 +14,7 @@ loaderVersion="[47,)" #mandatory This is typically bumped every Minecraft versio
 license="MIT"
 
 # A URL to refer people to when problems occur with this mod
-#issueTrackerURL="https://change.me.to.your.issue.tracker.example.invalid/" #optional
+issueTrackerURL="https://github.com/C2100425774/user_9k2h8ismc9exbn45-s-Eternal-Food/issues" #optional
 
 # If your mod is purely client-side and has no multiplayer functionality (be it dedicated servers or Open to LAN),
 # set this to true, and Forge will set the correct displayTest for you and skip loading your mod on dedicated servers.
@@ -37,7 +37,7 @@ displayName="永恒原版食物" #mandatory
 #updateJSONURL="https://change.me.example.invalid/updates.json" #optional
 
 # A URL for the "homepage" for this mod, displayed in the mod UI
-#displayURL="https://change.me.to.your.mods.homepage.example.invalid/" #optional
+displayURL="https://github.com/C2100425774/user_9k2h8ismc9exbn45-s-Eternal-Food" #optional
 
 # A file name (in the root of the mod JAR) containing a logo for display
 #logoFile="examplemod.png" #optional

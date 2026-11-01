@@ -1,6 +1,7 @@
 package cn.autoforged.eternal_food_mod_1789477527;
 
 import cn.autoforged.eternal_food_mod_1789477527.block.ModBlocks;
+import cn.autoforged.eternal_food_mod_1789477527.block.entity.ModBlockEntities;
 import cn.autoforged.eternal_food_mod_1789477527.effect.ModEffects;
 import cn.autoforged.eternal_food_mod_1789477527.entity.ModEntities;
 import cn.autoforged.eternal_food_mod_1789477527.event.ModCreativeTabs;
@@ -19,6 +20,7 @@ public class EternalFoodMod {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         // 方块必须先于物品注册：永恒蛋糕的物品是 BlockItem，取 Block 时方块得已经在注册表里。
         ModBlocks.register(modEventBus);
+        ModBlockEntities.register(modEventBus);
         ModItems.register(modEventBus);
         ModEffects.register(modEventBus);
         ModEntities.register(modEventBus);

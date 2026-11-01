@@ -21,6 +21,10 @@ public class ModBlocks {
     public static final RegistryObject<Block> ETERNAL_CAKE =
             BLOCKS.register("eternal_cake_slice", EternalCakeBlock::new);
 
+    /** 永恒数字钟：正面用 7 段数码管实时显示游戏时间（HH:MM）。 */
+    public static final RegistryObject<Block> ETERNAL_CLOCK =
+            BLOCKS.register("eternal_clock", EternalClockBlock::new);
+
     public static void register(IEventBus modEventBus) {
         BLOCKS.register(modEventBus);
     }

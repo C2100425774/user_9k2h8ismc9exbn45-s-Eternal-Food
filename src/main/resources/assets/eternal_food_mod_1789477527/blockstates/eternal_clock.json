@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,waterlogged=false": { "model": "eternal_food_mod_1789477527:block/eternal_clock" },
+    "facing=north,waterlogged=true": { "model": "eternal_food_mod_1789477527:block/eternal_clock" },
+    "facing=south,waterlogged=false": { "model": "eternal_food_mod_1789477527:block/eternal_clock_south" },
+    "facing=south,waterlogged=true": { "model": "eternal_food_mod_1789477527:block/eternal_clock_south" },
+    "facing=east,waterlogged=false": { "model": "eternal_food_mod_1789477527:block/eternal_clock_east" },
+    "facing=east,waterlogged=true": { "model": "eternal_food_mod_1789477527:block/eternal_clock_east" },
+    "facing=west,waterlogged=false": { "model": "eternal_food_mod_1789477527:block/eternal_clock_west" },
+    "facing=west,waterlogged=true": { "model": "eternal_food_mod_1789477527:block/eternal_clock_west" }
+  }
+}

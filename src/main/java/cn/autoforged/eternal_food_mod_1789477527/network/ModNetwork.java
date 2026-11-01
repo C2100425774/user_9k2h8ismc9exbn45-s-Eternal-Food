@@ -35,10 +35,36 @@ public final class ModNetwork {
                 TotemAnimationPacket::encode,
                 TotemAnimationPacket::decode,
                 TotemAnimationPacket::handle);
+        CHANNEL.registerMessage(id++, ClockActionPacket.class,
+                ClockActionPacket::encode,
+                ClockActionPacket::decode,
+                ClockActionPacket::handle);
+        CHANNEL.registerMessage(id++, ClockStatePacket.class,
+                ClockStatePacket::encode,
+                ClockStatePacket::decode,
+                ClockStatePacket::handle);
+        CHANNEL.registerMessage(id++, ClockTimePacket.class,
+                ClockTimePacket::encode,
+                ClockTimePacket::decode,
+                ClockTimePacket::handle);
     }
 
     /** 让指定玩家客户端用 {@code stack} 播放一次不死图腾激活动画（仅服务端调用）。 */
     public static void sendTotemAnimation(ServerPlayer player, ItemStack stack) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new TotemAnimationPacket(stack));
+    }
+
+    /** 把时钟面板的锁定状态同步给客户端（仅服务端调用）。 */
+    public static void sendClockState(ServerPlayer player, boolean timeLocked, boolean weatherLocked,
+            long dayTime) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new ClockStatePacket(timeLocked, weatherLocked, dayTime));
+    }
+
+    /** 每秒把服务端的 dayTime 与锁定状态推给客户端（仅服务端调用）。 */
+    public static void sendClockTime(ServerPlayer player, long dayTime, boolean timeLocked,
+            boolean weatherLocked) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new ClockTimePacket(dayTime, timeLocked, weatherLocked));
     }
 }

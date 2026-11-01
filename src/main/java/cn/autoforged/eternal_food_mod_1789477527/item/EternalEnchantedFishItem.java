@@ -36,6 +36,25 @@ public class EternalEnchantedFishItem extends EternalFoodItem {
     /** 存储继承来的状态效果的 NBT 键（{@link MobEffectInstance#save}/{@link MobEffectInstance#load} 格式的列表）。 */
     public static final String BUFFS_TAG = "eternal_buffs";
 
+    /** 继承来的饥饿值（{@link FoodProperties#getNutrition()}）。没存过时用物品自带值。 */
+    public static final String NUTRITION_TAG = "eternal_nutrition";
+
+    /**
+     * 继承来的**饱和度点数**（不是 {@link FoodProperties#getSaturationModifier()} 那个系数）。
+     *
+     * <p>必须存点数而不是系数：原版实际饱和度 = 饥饿值 × 饱和系数 × 2，
+     * 如果只对「系数」取最大值，20 饥饿值 / 0.5 系数的鱼和 8 饥饿值 / 0.8 系数的牛排合成后
+     * 会变成 20 饥饿值 / 0.8 系数 = 32 点饱和度，凭空变高。存点数才能和饥饿值放在同一单位下比较。
+     */
+    public static final String SATURATION_TAG = "eternal_saturation_points";
+
+    /**
+     * 兜底值，必须与 {@code ModItems} 里注册的 FoodProperties 一致：
+     * 营养 20、饱和系数 0.5 → 实际饱和度 20 × 0.5 × 2 = 20（正好是原版上限）。
+     */
+    public static final int DEFAULT_NUTRITION = 20;
+    public static final float DEFAULT_SATURATION_POINTS = 20.0F;
+
     public EternalEnchantedFishItem(Item.Properties properties) {
         // 基础物品用干海带：继承「快速进食」动画与音效，且不会被基类当作需要特殊处理的食材。
         super(Items.DRIED_KELP, properties, false, null);
@@ -64,9 +83,25 @@ public class EternalEnchantedFishItem extends EternalFoodItem {
         for (MobEffectInstance instance : getBuffs(stack)) {
             tooltipComponents.add(describeEffect(instance));
         }
+        int nutrition = getNutrition(stack);
+        float saturation = getSaturation(stack);
+        // 附魔永恒之鱼的核心卖点就是食物属性，所以这两行始终显示，不再"继承过才显示"。
+        tooltipComponents.add(Component.translatable("tooltip.eternal_food_mod_1789477527.fish_food",
+                nutrition, formatNumber(saturation)).withStyle(ChatFormatting.GREEN));
+        tooltipComponents.add(Component
+                .translatable("tooltip.eternal_food_mod_1789477527.enchanted_fish_food_rule")
+                .withStyle(ChatFormatting.LIGHT_PURPLE));
         tooltipComponents.add(Component.translatable("tooltip.eternal_food_mod_1789477527.enchanted_fish")
                 .withStyle(ChatFormatting.LIGHT_PURPLE));
         super.appendHoverText(stack, level, tooltipComponents, isAdvanced);
+    }
+
+    /** 尽量显示整数：本身就是整数（或误差 < 0.05）时不带小数点，否则保留一位小数。 */
+    private static String formatNumber(float value) {
+        long rounded = Math.round(value);
+        return Math.abs(value - rounded) < 0.05F
+                ? Long.toString(rounded)
+                : String.format(java.util.Locale.ROOT, "%.1f", value);
     }
 
     /** 读取物品 NBT 中存储的继承效果。 */
@@ -99,6 +134,73 @@ public class EternalEnchantedFishItem extends EternalFoodItem {
             list.add(instance.save(new CompoundTag()));
         }
         stack.getOrCreateTag().put(BUFFS_TAG, list);
+    }
+
+    /** 读取继承来的饥饿值；没存过时返回物品自带值（20）。 */
+    public static int getNutrition(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.contains(NUTRITION_TAG) ? tag.getInt(NUTRITION_TAG) : DEFAULT_NUTRITION;
+    }
+
+    /** 读取继承来的**饱和度点数**；没存过时返回物品自带值（20，原版上限）。 */
+    public static float getSaturation(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.contains(SATURATION_TAG)
+                ? tag.getFloat(SATURATION_TAG)
+                : DEFAULT_SATURATION_POINTS;
+    }
+
+    /**
+     * 写入继承来的食物属性（饱和度按**点数**传，不是系数）。与默认值完全一致时**移除**对应 NBT 键，
+     * 这样「用牛奶退化回永恒之鱼」得到的干净物品与手工合成的完全等价。
+     */
+    public static void setFood(ItemStack stack, int nutrition, float saturationPoints) {
+        CompoundTag tag = stack.getOrCreateTag();
+        if (nutrition == DEFAULT_NUTRITION) {
+            tag.remove(NUTRITION_TAG);
+        } else {
+            tag.putInt(NUTRITION_TAG, nutrition);
+        }
+        if (Math.abs(saturationPoints - DEFAULT_SATURATION_POINTS) < 1.0E-3F) {
+            tag.remove(SATURATION_TAG);
+        } else {
+            tag.putFloat(SATURATION_TAG, saturationPoints);
+        }
+    }
+
+    /** 把「饱和度点数」换算回 {@link FoodProperties} 需要的饱和系数：点数 = 营养 × 系数 × 2。 */
+    public static float toSaturationModifier(int nutrition, float saturationPoints) {
+        return nutrition <= 0 ? 0.0F : saturationPoints / (nutrition * 2.0F);
+    }
+
+    /**
+     * 食用时用 NBT 里继承的食物属性覆盖物品自带值。
+     *
+     * <p>原版 {@code Item#finishUsingItem} 走的是 {@code Entity#eat}，而 {@code eat} 会调用
+     * {@code stack.getFoodProperties(entity)}，因此在这里返回动态属性即可，不必重写进食流程。
+     * 干海带的「快速进食」、金苹果式的「满饥饿也能吃」等标志位从原属性拷贝，避免丢失。
+     */
+    @Override
+    public FoodProperties getFoodProperties(ItemStack stack, LivingEntity entity) {
+        FoodProperties base = super.getFoodProperties(stack, entity);
+        CompoundTag tag = stack.getTag();
+        if (base == null || tag == null
+                || (!tag.contains(NUTRITION_TAG) && !tag.contains(SATURATION_TAG))) {
+            return base;
+        }
+        FoodProperties.Builder builder = new FoodProperties.Builder()
+                .nutrition(getNutrition(stack))
+                .saturationMod(toSaturationModifier(getNutrition(stack), getSaturation(stack)));
+        if (base.canAlwaysEat()) {
+            builder.alwaysEat();
+        }
+        if (base.isMeat()) {
+            builder.meat();
+        }
+        if (base.isFastFood()) {
+            builder.fast();
+        }
+        return builder.build();
     }
 
     /**

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "eternal_food_mod_1789477527:eternal_brown_mushroom" },
+    { "item": "eternal_food_mod_1789477527:eternal_red_mushroom" },
+    { "item": "minecraft:iron_block" },
+    { "item": "minecraft:emerald_block" },
+    { "item": "minecraft:clock" },
+    { "item": "minecraft:dragon_breath" },
+    { "item": "minecraft:diamond_block" },
+    { "item": "minecraft:netherite_block" },
+    { "item": "minecraft:gold_block" }
+  ],
+  "result": { "item": "eternal_food_mod_1789477527:eternal_clock" }
+}

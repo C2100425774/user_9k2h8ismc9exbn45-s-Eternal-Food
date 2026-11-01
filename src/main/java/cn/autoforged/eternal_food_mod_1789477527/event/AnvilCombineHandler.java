@@ -9,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
@@ -24,8 +25,11 @@ import net.minecraftforge.fml.common.Mod;
  * <ul>
  *   <li>永恒之鱼 + 任意「有效果的食物」→ 附魔永恒之鱼，继承该食物的效果（buff 与 debuff 都继承）；</li>
  *   <li>附魔永恒之鱼 + 任意「有效果的食物」→ 附魔永恒之鱼，同名效果取最高等级与最长时长；</li>
- *   <li>附魔永恒之鱼 + 普通奶桶 / 永恒奶桶 / 永恒喷溅型奶瓶 → 永恒之鱼，清除全部继承效果；</li>
- *   <li>附魔永恒之鱼 + 永恒奶桶plus / 永恒喷溅型奶瓶plus → 只清除继承的 debuff；</li>
+ *   <li>合成时同时继承饥饿值与饱和系数的最大值（例如 20/0.5 的附魔永恒之鱼 + 金苹果的 4/1.2
+ *       仍然是 20/1.2），因此附魔永恒之鱼吃下去比普通永恒之鱼更管饱；</li>
+ *   <li>附魔永恒之鱼 + 普通奶桶 / 永恒奶桶 / 永恒喷溅型奶瓶 → 永恒之鱼，清除全部继承效果，
+ *       <b>并把这些继承来的饥饿值 / 饱和度一并重置</b>；</li>
+ *   <li>附魔永恒之鱼 + 永恒奶桶plus / 永恒喷溅型奶瓶plus → 只清除继承的 debuff（食物属性保留）；</li>
  *   <li>永恒之星 + 药水（普通 / 喷溅 / 滞留，原版或永恒）、永恒药箭或附魔永恒之鱼 → 对应物品，
  *       其全部 buff 与 debuff 的持续时间改为无限（-1）；药水 / 药箭同时保留原有颜色；</li>
  *   <li>以上操作均只消耗 1 级经验、无经验惩罚；铁砧破损沿用原版（{@code AnvilMenu#onTake}）。</li>
@@ -94,16 +98,31 @@ public class AnvilCombineHandler {
         }
 
         // 合并已有继承效果与另一物品提供的效果（buff 与 debuff 都继承）；
-        // 没有可继承的效果时交还原版处理。
+        // 同时继承饥饿值与饱和系数的**最大值**（与效果"取最高等级、最长时长"同样的规则）。
+        // 两者都没有可继承的内容时交还原版处理。
         List<MobEffectInstance> merged = EternalEnchantedFishItem.mergeBuffs(
                 EternalEnchantedFishItem.getBuffs(fish),
                 EternalEnchantedFishItem.collectBuffs(other));
-        if (merged.isEmpty()) {
+
+        int fishNutrition = EternalEnchantedFishItem.getNutrition(fish);
+        float fishSaturation = EternalEnchantedFishItem.getSaturation(fish);
+        FoodProperties otherFood = other.getFoodProperties(null);
+        int otherNutrition = otherFood == null ? 0 : otherFood.getNutrition();
+        // 统一换算成「饱和度点数」再比较：原版实际饱和度 = 饥饿值 × 饱和系数 × 2。
+        float otherSaturation = otherFood == null
+                ? 0.0F
+                : otherNutrition * otherFood.getSaturationModifier() * 2.0F;
+        int nutrition = Math.max(fishNutrition, otherNutrition);
+        float saturation = Math.max(fishSaturation, otherSaturation);
+        boolean foodImproved = nutrition > fishNutrition || saturation > fishSaturation;
+
+        if (merged.isEmpty() && !foodImproved) {
             return;
         }
 
         ItemStack output = new ItemStack(ModItems.ETERNAL_ENCHANTED_FISH.get());
         EternalEnchantedFishItem.setBuffs(output, merged);
+        EternalEnchantedFishItem.setFood(output, nutrition, saturation);
         acceptOutput(event, output);
     }
 

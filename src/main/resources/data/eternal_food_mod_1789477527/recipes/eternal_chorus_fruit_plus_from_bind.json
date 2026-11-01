@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "eternal_food_mod_1789477527:eternal_chorus_fruit_plus_bind" }
+  ],
+  "result": { "item": "eternal_food_mod_1789477527:eternal_chorus_fruit_plus" }
+}
