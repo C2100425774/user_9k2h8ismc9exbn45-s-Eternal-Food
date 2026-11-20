@@ -4,7 +4,11 @@ import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
 import cn.autoforged.eternal_food_mod_1789477527.item.EternalSpawnEggItem;
 import cn.autoforged.eternal_food_mod_1789477527.item.ModItems;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.CreativeModeTab;
@@ -38,8 +42,14 @@ public class ModCreativeTabs {
                             Item value = item.get();
                             if (value == ModItems.ETERNAL_POTION.get()) {
                                 output.accept(potion(ModItems.ETERNAL_POTION.get(), Potions.STRONG_HEALING));
+                                // 无限时长夜视药水（示例栈）：与「永恒之星 + 药水」在铁砧中合成的产物一致。
+                                output.accept(infinitePotion(ModItems.ETERNAL_POTION.get(),
+                                        MobEffects.NIGHT_VISION, 0));
                             } else if (value == ModItems.ETERNAL_SPLASH_POTION.get()) {
                                 output.accept(potion(ModItems.ETERNAL_SPLASH_POTION.get(), Potions.STRONG_HARMING));
+                                // 无限时长「抗性提升 V」喷溅型药水（指令等级 5 = amplifier 4）。
+                                output.accept(infinitePotion(ModItems.ETERNAL_SPLASH_POTION.get(),
+                                        MobEffects.DAMAGE_RESISTANCE, 4));
                             } else if (value == ModItems.ETERNAL_LINGERING_POTION.get()) {
                                 output.accept(lingeringWeakness());
                             } else if (value == ModItems.ETERNAL_TIPPED_ARROW.get()) {
@@ -65,6 +75,35 @@ public class ModCreativeTabs {
     private static ItemStack potion(Item item, net.minecraft.world.item.alchemy.Potion potion) {
         ItemStack stack = new ItemStack(item);
         PotionUtils.setPotion(stack, potion);
+        return stack;
+    }
+
+    /**
+     * 构造「无限时长」的自定义效果药水栈（创造模式示范用）。
+     *
+     * <p>写法与 {@code event/AnvilCombineHandler} 中「永恒之星 + 药水 → 无限药水」的产物完全一致：
+     * 不写 {@code Potion} 标签，而是把效果以 {@code CustomPotionEffects} 写回，时长用
+     * {@link MobEffectInstance#INFINITE_DURATION}（-1，等同于指令里的 {@code infinite}）。
+     * 这样 {@code PotionUtils.addPotionTooltip} 会把时长显示成 {@code **:**}（原版
+     * {@code effect.duration.infinite}），饮用 / 投掷时原版逻辑也会直接施加无限时长效果
+     *（喷溅型的距离衰减走 {@code MobEffectInstance#mapDuration}，无限时长不会被衰减）。
+     *
+     * <p>必须同时写 {@code CustomPotionColor}：没有 {@code Potion} 标签时
+     * {@code PotionUtils.getColor} 会退回空瓶色，导致图标液体颜色不对。
+     *
+     * @param item      永恒药水物品（普通 / 喷溅 / 滞留）
+     * @param effect    药水效果
+     * @param amplifier 效果等级（指令等级 - 1，例如抗性提升 V = 4）
+     */
+    private static ItemStack infinitePotion(Item item, MobEffect effect, int amplifier) {
+        ItemStack stack = new ItemStack(item);
+        MobEffectInstance instance = new MobEffectInstance(effect,
+                MobEffectInstance.INFINITE_DURATION, amplifier);
+        ListTag list = new ListTag();
+        list.add(instance.save(new CompoundTag()));
+        CompoundTag tag = stack.getOrCreateTag();
+        tag.put(PotionUtils.TAG_CUSTOM_POTION_EFFECTS, list);
+        tag.putInt(PotionUtils.TAG_CUSTOM_POTION_COLOR, effect.getColor());
         return stack;
     }
 

@@ -201,12 +201,13 @@ public class ModItems {
 
     // 永恒药水：与原版药水完全一致（药水类型存 NBT），区别仅在于使用后不消耗物品。
     // 不进入 ETERNAL_TO_BASE（没有"原版食物 + 下界之星"合成，靠酿造台获得，见 recipe/ModBrewingRecipes）。
+    // 稀有度统一为 RARE（蓝字 / 青色，§b），与其他永恒食物一致；之前漏设导致三种药水是白字。
     public static final RegistryObject<Item> ETERNAL_POTION = ITEMS.register("eternal_potion",
-            () -> new EternalPotionItem(new Item.Properties().stacksTo(1)));
+            () -> new EternalPotionItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
     public static final RegistryObject<Item> ETERNAL_SPLASH_POTION = ITEMS.register("eternal_splash_potion",
-            () -> new EternalThrowablePotionItem(new Item.Properties().stacksTo(1), false));
+            () -> new EternalThrowablePotionItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE), false));
     public static final RegistryObject<Item> ETERNAL_LINGERING_POTION = ITEMS.register("eternal_lingering_potion",
-            () -> new EternalThrowablePotionItem(new Item.Properties().stacksTo(1), true));
+            () -> new EternalThrowablePotionItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE), true));
 
     // 永恒药箭：与原版药箭完全一致（药水类型存 NBT），区别仅在于作为弓 / 弩 / 发射器的弹药时不消耗。
     // 不进入 ETERNAL_TO_BASE（没有"原版食物 + 下界之星"合成，配方见 ModRecipeProvider），
