@@ -3,6 +3,7 @@ package cn.autoforged.eternal_food_mod_1789477527.event;
 import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
 import cn.autoforged.eternal_food_mod_1789477527.item.EternalSpawnEggItem;
 import cn.autoforged.eternal_food_mod_1789477527.item.ModItems;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -44,12 +45,19 @@ public class ModCreativeTabs {
                                 output.accept(potion(ModItems.ETERNAL_POTION.get(), Potions.STRONG_HEALING));
                                 // 无限时长夜视药水（示例栈）：与「永恒之星 + 药水」在铁砧中合成的产物一致。
                                 output.accept(infinitePotion(ModItems.ETERNAL_POTION.get(),
-                                        MobEffects.NIGHT_VISION, 0));
+                                        MobEffects.NIGHT_VISION.getColor(), null,
+                                        infiniteEffect(MobEffects.NIGHT_VISION, 0)));
+                                // 信标药水：六种信标效果全部无限时长（对应原版 /give 指令）。
+                                output.accept(beaconPotion());
                             } else if (value == ModItems.ETERNAL_SPLASH_POTION.get()) {
                                 output.accept(potion(ModItems.ETERNAL_SPLASH_POTION.get(), Potions.STRONG_HARMING));
                                 // 无限时长「抗性提升 V」喷溅型药水（指令等级 5 = amplifier 4）。
+                                // 颜色固定用 10044730（#99453A，旧版抗性提升色）：1.19.4 起原版
+                                // DAMAGE_RESISTANCE 的效果色改成了 #9146F0，直接用 effect.getColor()
+                                // 会变成紫色（看起来像不可合成的药水），所以这里写死作者指定的旧色。
                                 output.accept(infinitePotion(ModItems.ETERNAL_SPLASH_POTION.get(),
-                                        MobEffects.DAMAGE_RESISTANCE, 4));
+                                        10044730, null,
+                                        infiniteEffect(MobEffects.DAMAGE_RESISTANCE, 4)));
                             } else if (value == ModItems.ETERNAL_LINGERING_POTION.get()) {
                                 output.accept(lingeringWeakness());
                             } else if (value == ModItems.ETERNAL_TIPPED_ARROW.get()) {
@@ -88,23 +96,62 @@ public class ModCreativeTabs {
      * {@code effect.duration.infinite}），饮用 / 投掷时原版逻辑也会直接施加无限时长效果
      *（喷溅型的距离衰减走 {@code MobEffectInstance#mapDuration}，无限时长不会被衰减）。
      *
-     * <p>必须同时写 {@code CustomPotionColor}：没有 {@code Potion} 标签时
-     * {@code PotionUtils.getColor} 会退回空瓶色，导致图标液体颜色不对。
+     * <p>必须同时写 {@code CustomPotionColor}：没有 {@code Potion} 标签、或效果全部隐藏粒子时
+     * {@code PotionUtils.getColor} 都会退回默认色，导致图标液体颜色不对。
      *
      * @param item      永恒药水物品（普通 / 喷溅 / 滞留）
-     * @param effect    药水效果
-     * @param amplifier 效果等级（指令等级 - 1，例如抗性提升 V = 4）
+     * @param color     {@code CustomPotionColor}（液体颜色）
+     * @param hoverName 自定义名字（可为 null）；非 null 时写入 {@code display.Name}，
+     *                  原版会显示在物品名处、按组件样式着色、并按组件里的 italic 决定是否斜体
+     * @param effects   效果列表（应使用 {@link #infiniteEffect} 构造）
      */
-    private static ItemStack infinitePotion(Item item, MobEffect effect, int amplifier) {
+    private static ItemStack infinitePotion(Item item, int color, Component hoverName,
+            MobEffectInstance... effects) {
         ItemStack stack = new ItemStack(item);
-        MobEffectInstance instance = new MobEffectInstance(effect,
-                MobEffectInstance.INFINITE_DURATION, amplifier);
         ListTag list = new ListTag();
-        list.add(instance.save(new CompoundTag()));
+        for (MobEffectInstance effect : effects) {
+            list.add(effect.save(new CompoundTag()));
+        }
         CompoundTag tag = stack.getOrCreateTag();
         tag.put(PotionUtils.TAG_CUSTOM_POTION_EFFECTS, list);
-        tag.putInt(PotionUtils.TAG_CUSTOM_POTION_COLOR, effect.getColor());
+        tag.putInt(PotionUtils.TAG_CUSTOM_POTION_COLOR, color);
+        if (hoverName != null) {
+            stack.setHoverName(hoverName);
+        }
         return stack;
+    }
+
+    /**
+     * 无限时长 + 隐藏粒子的单个效果，对应指令里的 {@code Duration:-1, ShowParticles:0b}。
+     *
+     * <p>{@code visible=false} 只关粒子；{@code showIcon=true} 保留 HUD 效果图标
+     *（指令里不写 {@code ShowIcon} 时默认也是 true）。
+     */
+    private static MobEffectInstance infiniteEffect(MobEffect effect, int amplifier) {
+        return new MobEffectInstance(effect, MobEffectInstance.INFINITE_DURATION, amplifier,
+                false, false, true);
+    }
+
+    /**
+     * 创造性示范用的「信标药水」：六种信标效果全部无限时长、隐藏粒子，淡紫色名字。
+     *
+     * <p>对应原版指令：
+     * {@code /give @p minecraft:potion{CustomPotionColor:6085589,CustomPotionEffects:[
+     * {Id:1,...,Amplifier:1},{Id:3,...,Amplifier:1},{Id:11,...,Amplifier:1},
+     * {Id:8,...,Amplifier:1},{Id:5,...,Amplifier:1},{Id:10,...,Amplifier:0}],
+     * display:{Name:'{"text":"信标药水","italic":false,"color":"light_purple"}'}}}（时长全部 -1）。
+     * 效果 ID：1 = 速度、3 = 急迫、11 = 抗性提升、8 = 跳跃提升、5 = 力量、10 = 生命恢复。
+     */
+    private static ItemStack beaconPotion() {
+        return infinitePotion(ModItems.ETERNAL_POTION.get(), 6085589,
+                Component.translatable("potion." + EternalFoodMod.MOD_ID + ".beacon")
+                        .withStyle(style -> style.withColor(ChatFormatting.LIGHT_PURPLE).withItalic(false)),
+                infiniteEffect(MobEffects.MOVEMENT_SPEED, 1),
+                infiniteEffect(MobEffects.DIG_SPEED, 1),
+                infiniteEffect(MobEffects.DAMAGE_RESISTANCE, 1),
+                infiniteEffect(MobEffects.JUMP, 1),
+                infiniteEffect(MobEffects.DAMAGE_BOOST, 1),
+                infiniteEffect(MobEffects.REGENERATION, 0));
     }
 
     /**
