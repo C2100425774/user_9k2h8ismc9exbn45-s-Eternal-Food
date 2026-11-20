@@ -246,8 +246,8 @@ public class ModItems {
                     .food(new FoodProperties.Builder().nutrition(0).saturationMod(0.0F).alwaysEat().fast().build()),
                     EternalStarItem.Mode.TIME));
 
-    // 永恒之星（力量）：食用后把自身所有正面 buff 等级 +1（等级上限只有 1 的 buff 不变）；
-    // 铁砧中与药水 / 永恒药箭 / 附魔永恒之鱼合成时，同样把其中的 buff 等级 +1，
+    // 永恒之星（力量）：食用后把自身所有状态（buff 与 debuff）等级 +1（等级上限只有 1 的效果
+    // 不变）；铁砧中与药水 / 永恒药箭 / 附魔永恒之鱼合成时，同样把其中的效果等级 +1，
     // 并保留药水原本的颜色。与「永恒之星 - 时间」在工作台里 1:1 互相转化。
     public static final RegistryObject<Item> ETERNAL_STAR_POWER = ITEMS.register("eternal_star_power",
             () -> new EternalStarItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)

@@ -38,7 +38,7 @@
   "tooltip.eternal_food_mod_1789477527.red_mushroom_offhand": "When placed in the offhand, attempts to use automatically at night once every 15 seconds",
   "tooltip.eternal_food_mod_1789477527.brown_mushroom_offhand": "When placed in the offhand, attempts to use automatically during the day once every 15 seconds",
   "tooltip.eternal_food_mod_1789477527.eternal_star": "Eating makes all of your buffs and debuffs last forever; combine with potions or the Eternal Enchanted Fish in an anvil",
-  "tooltip.eternal_food_mod_1789477527.eternal_star_power": "Eating raises all of your buff levels by 1 (buffs whose level cap is 1 stay unchanged); combine with potions or the Eternal Enchanted Fish in an anvil",
+  "tooltip.eternal_food_mod_1789477527.eternal_star_power": "Eating raises all of your buff and debuff levels by 1 (effects whose level cap is 1 stay unchanged); combine with potions or the Eternal Enchanted Fish in an anvil",
   "tooltip.eternal_food_mod_1789477527.full_domain": "Hold for 5 seconds: in the Overworld, fills the chunk below your feet with stone and deepslate (full blocks are skipped, incomplete blocks are replaced; if your y<=0 only deepslate is used, otherwise y>0 stone and y<=0 deepslate)",
   "tooltip.eternal_food_mod_1789477527.abyss": "Eating grants 8 minutes of Gulosity: for its duration you can eat normally even when full",
   "effect.eternal_food_mod_1789477527.gulosity": "Gulosity",

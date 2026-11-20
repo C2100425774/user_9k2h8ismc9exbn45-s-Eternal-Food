@@ -16,9 +16,10 @@ import net.minecraft.world.level.Level;
  *   <li>{@link Mode#TIME}「永恒之星 - 时间」：食用后把自身当前所有 buff 与 debuff 的持续时间
  *       改为无限（{@link MobEffectInstance#INFINITE_DURATION} = -1，即指令里的「无限」），
  *       等级与可见性等属性保持不变；</li>
- *   <li>{@link Mode#POWER}「永恒之星 - 力量」：食用后把自身当前所有正面 buff 的等级 +1
- *       （amplifier+1），debuff 不动；等级上限只有 1 的 buff（见
- *       {@link StarEffectHelper#isSingleLevelBuff}）保持不变。</li>
+ *   <li>{@link Mode#POWER}「永恒之星 - 力量」：食用后把自身当前所有状态（buff 与 debuff）的等级 +1
+ *       （amplifier+1）；等级上限只有 1 的效果（见
+ *       {@link StarEffectHelper#isSingleLevelEffect}）保持不变。负面效果等级提高后可以用
+ *       永恒奶桶plus 洗掉，所以对 debuff 升级同样有意义。</li>
  * </ul>
  *
  * <p>两个变体都还能在铁砧中与药水 / 永恒药箭 / 附魔永恒之鱼合成，分别把其效果「变为无限」或
@@ -30,7 +31,7 @@ public class EternalStarItem extends EternalFoodItem {
     public enum Mode {
         /** 时间：所有 buff / debuff 持续时间变为无限。 */
         TIME("tooltip.eternal_food_mod_1789477527.eternal_star"),
-        /** 力量：所有正面 buff 等级 +1。 */
+        /** 力量：所有状态（buff 与 debuff）等级 +1。 */
         POWER("tooltip.eternal_food_mod_1789477527.eternal_star_power");
 
         private final String hintKey;
@@ -77,7 +78,7 @@ public class EternalStarItem extends EternalFoodItem {
                 if (this.mode == Mode.TIME) {
                     entity.addEffect(StarEffectHelper.withInfiniteDuration(instance));
                 } else {
-                    // 力量：只有真正能 +1 的效果才写回，避免对「等级上限只有 1」的 buff 做无意义刷新。
+                    // 力量：只对真正能 +1 的效果写回，避免对「等级上限只有 1」的效果做无意义刷新。
                     if (StarEffectHelper.canRaiseLevel(instance)) {
                         entity.addEffect(StarEffectHelper.withRaisedLevel(instance));
                     }

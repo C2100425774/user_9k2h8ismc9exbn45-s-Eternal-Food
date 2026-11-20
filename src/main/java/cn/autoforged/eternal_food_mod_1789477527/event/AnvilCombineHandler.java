@@ -33,8 +33,8 @@ import net.minecraftforge.fml.common.Mod;
  *   <li>附魔永恒之鱼 + 永恒奶桶plus / 永恒喷溅型奶瓶plus → 只清除继承的 debuff（食物属性保留）；</li>
  *   <li>永恒之星（时间）+ 药水（普通 / 喷溅 / 滞留，原版或永恒）、永恒药箭或附魔永恒之鱼 →
  *       对应物品，其全部 buff 与 debuff 的持续时间改为无限（-1）；药水 / 药箭同时保留原有颜色；</li>
- *   <li>永恒之星（力量）+ 同样的物品 → 对应物品，其中的正面 buff 等级 +1（等级上限只有 1 的
- *       buff 不变），debuff 不动；药水 / 药箭同样保留原有颜色；</li>
+ *   <li>永恒之星（力量）+ 同样的物品 → 对应物品，其中的所有效果（buff 与 debuff）等级 +1
+ *       （等级上限只有 1 的效果不变）；药水 / 药箭同样保留原有颜色；</li>
  *   <li>以上操作均只消耗 1 级经验、无经验惩罚；铁砧破损沿用原版（{@code AnvilMenu#onTake}）。</li>
  * </ul>
  *
@@ -55,7 +55,7 @@ public class AnvilCombineHandler {
         // 两种永恒之星 + 「有药水标签的物品」（药水 / 永恒药水 / 喷溅 / 滞留变体）/ 永恒药箭
         // 或附魔永恒之鱼：
         //   时间之星 → 把其全部 buff 与 debuff 的持续时间改为无限（-1）；
-        //   力量之星 → 把其中的正面 buff 等级 +1（等级上限只有 1 的 buff 不变）。
+        //   力量之星 → 把所有效果（buff 与 debuff）等级 +1（等级上限只有 1 的效果不变）。
         // 两者都保留药水原本的颜色（写回 CustomPotionColor，见 convertPotion）。其他带 buff 的
         // 食物（亵渎之鱼、迷之炖菜等）不属于药水类，因此不会被识别。星星本身在取件时返还
         // （见 onAnvilRepair）。
@@ -167,7 +167,7 @@ public class AnvilCombineHandler {
      *（含自定义效果）取出后清空 {@code Potion} / {@code CustomPotionEffects}，再以
      * {@code CustomPotionEffects} 写回改写后的版本：
      * 时间之星 → 持续时间无限（瞬间效果没有时长概念，保持原样）；
-     * 力量之星 → 正面 buff 等级 +1（等级上限只有 1 的 buff 不变）。
+     * 力量之星 → 所有效果（buff 与 debuff）等级 +1（等级上限只有 1 的效果不变）。
      *
      * <p>清空 {@code Potion} 后 {@link PotionUtils#getColor} 会退化为空瓶色，故先把原色算出并以
      * {@code CustomPotionColor} 写回，保证药水 / 药箭的颜色不丢失（{@code getColor} 优先返回
@@ -196,7 +196,7 @@ public class AnvilCombineHandler {
             }
         }
         if (!changed) {
-            // 力量之星对「只有等级上限 1 的 buff」或纯 debuff 药水没有任何效果，不合成。
+            // 力量之星对「全部都是等级上限 1 的效果」的药水没有任何效果，不合成。
             return null;
         }
         int color = PotionUtils.getColor(potion);
@@ -217,7 +217,7 @@ public class AnvilCombineHandler {
     }
 
     /**
-     * 把附魔永恒之鱼存储的全部效果按星星能力改写（时间 → 无限时长；力量 → 正面 buff 等级 +1）。
+     * 把附魔永恒之鱼存储的全部效果按星星能力改写（时间 → 无限时长；力量 → 所有效果等级 +1）。
      *
      * @return 改写后的附魔永恒之鱼栈；没有任何继承效果，或力量之星无事可做时返回 null（表示不合成）。
      */
