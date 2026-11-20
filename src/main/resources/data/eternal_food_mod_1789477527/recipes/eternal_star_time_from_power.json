@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "eternal_food_mod_1789477527:eternal_star_power"
+    }
+  ],
+  "result": {
+    "item": "eternal_food_mod_1789477527:eternal_star"
+  }
+}

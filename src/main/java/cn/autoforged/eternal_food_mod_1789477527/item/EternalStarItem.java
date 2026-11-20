@@ -1,5 +1,6 @@
 package cn.autoforged.eternal_food_mod_1789477527.item;
 
+import cn.autoforged.eternal_food_mod_1789477527.util.StarEffectHelper;
 import java.util.List;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -8,20 +9,50 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 /**
- * 永恒之星：由下界之星等 9 种材料无序合成，可无限次食用而不被消耗。
+ * 永恒之星（时间 / 力量）：由下界之星等 9 种材料无序合成，可无限次食用而不被消耗。
+ * 两个变体可以在工作台里 1:1 互相转化。
  *
- * <p>食用后把玩家当前拥有的所有 buff 与 debuff 的持续时间改为无限
- * （{@link MobEffectInstance#INFINITE_DURATION} = -1，即指令里表示的那一种「无限」，
- * 而不是一个超大数值），等级与可见性等属性保持不变。
+ * <ul>
+ *   <li>{@link Mode#TIME}「永恒之星 - 时间」：食用后把自身当前所有 buff 与 debuff 的持续时间
+ *       改为无限（{@link MobEffectInstance#INFINITE_DURATION} = -1，即指令里的「无限」），
+ *       等级与可见性等属性保持不变；</li>
+ *   <li>{@link Mode#POWER}「永恒之星 - 力量」：食用后把自身当前所有正面 buff 的等级 +1
+ *       （amplifier+1），debuff 不动；等级上限只有 1 的 buff（见
+ *       {@link StarEffectHelper#isSingleLevelBuff}）保持不变。</li>
+ * </ul>
  *
- * <p>此外永恒之星还能在铁砧中与药水 / 附魔永恒之鱼合成，把其效果的持续时间改为无限，
- * 详见 {@code cn.autoforged.eternal_food_mod_1789477527.event.AnvilCombineHandler}。
+ * <p>两个变体都还能在铁砧中与药水 / 永恒药箭 / 附魔永恒之鱼合成，分别把其效果「变为无限」或
+ * 「等级 +1」，详见 {@code cn.autoforged.eternal_food_mod_1789477527.event.AnvilCombineHandler}。
  */
 public class EternalStarItem extends EternalFoodItem {
 
-    public EternalStarItem(Properties properties) {
-        super(Items.NETHER_STAR, properties, false,
-                "tooltip.eternal_food_mod_1789477527.eternal_star");
+    /** 永恒之星的两个变体。 */
+    public enum Mode {
+        /** 时间：所有 buff / debuff 持续时间变为无限。 */
+        TIME("tooltip.eternal_food_mod_1789477527.eternal_star"),
+        /** 力量：所有正面 buff 等级 +1。 */
+        POWER("tooltip.eternal_food_mod_1789477527.eternal_star_power");
+
+        private final String hintKey;
+
+        Mode(String hintKey) {
+            this.hintKey = hintKey;
+        }
+
+        public String hintKey() {
+            return this.hintKey;
+        }
+    }
+
+    private final Mode mode;
+
+    public EternalStarItem(Properties properties, Mode mode) {
+        super(Items.NETHER_STAR, properties, false, mode.hintKey());
+        this.mode = mode;
+    }
+
+    public Mode getMode() {
+        return this.mode;
     }
 
     @Override
@@ -43,9 +74,14 @@ public class EternalStarItem extends EternalFoodItem {
         if (!level.isClientSide) {
             // getActiveEffects 返回内部映射的实时视图；复制一份以免遍历时 addEffect 修改集合。
             for (MobEffectInstance instance : List.copyOf(entity.getActiveEffects())) {
-                entity.addEffect(new MobEffectInstance(instance.getEffect(),
-                        MobEffectInstance.INFINITE_DURATION, instance.getAmplifier(),
-                        instance.isAmbient(), instance.isVisible(), instance.showIcon()));
+                if (this.mode == Mode.TIME) {
+                    entity.addEffect(StarEffectHelper.withInfiniteDuration(instance));
+                } else {
+                    // 力量：只有真正能 +1 的效果才写回，避免对「等级上限只有 1」的 buff 做无意义刷新。
+                    if (StarEffectHelper.canRaiseLevel(instance)) {
+                        entity.addEffect(StarEffectHelper.withRaisedLevel(instance));
+                    }
+                }
             }
         }
         return result;

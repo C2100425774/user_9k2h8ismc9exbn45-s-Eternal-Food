@@ -159,6 +159,17 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_nether_star", has(Items.NETHER_STAR))
                 .save(writer);
 
+        // 永恒之星 - 时间 与 永恒之星 - 力量 在工作台里 1:1 互相转化（无序合成）。
+        // 注：时间之星的 id 保持 eternal_star 不变（旧存档兼容），力量之星是新增的 eternal_star_power。
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.ETERNAL_STAR_POWER.get())
+                .requires(ModItems.ETERNAL_STAR.get())
+                .unlockedBy("has_eternal_star_time", has(ModItems.ETERNAL_STAR.get()))
+                .save(writer, new ResourceLocation(EternalFoodMod.MOD_ID, "eternal_star_power"));
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.ETERNAL_STAR.get())
+                .requires(ModItems.ETERNAL_STAR_POWER.get())
+                .unlockedBy("has_eternal_star_power", has(ModItems.ETERNAL_STAR_POWER.get()))
+                .save(writer, new ResourceLocation(EternalFoodMod.MOD_ID, "eternal_star_time_from_power"));
+
         // 永恒满置域：4 组石头（256 个）+ 4 组深板岩（256 个）+ 1 下界之星 无序合成。
         // 使用自定义序列化器：匹配时额外要求石头 / 深板岩各 256 个（4 个满堆），取出成品时整堆消耗。
         saveFullDomainRecipe(writer);

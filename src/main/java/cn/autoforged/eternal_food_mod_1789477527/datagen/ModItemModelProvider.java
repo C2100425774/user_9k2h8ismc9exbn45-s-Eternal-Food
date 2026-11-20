@@ -41,6 +41,10 @@ public class ModItemModelProvider extends ItemModelProvider {
                 // 物品 id 为 eternal_abyss，但用户指定纹理为 abyss。
                 singleTexture(item.getId().getPath(), mcLoc("item/generated"),
                         "layer0", modLoc("item/abyss"));
+            } else if (value == ModItems.ETERNAL_STAR.get()) {
+                // 物品 id 为 eternal_star（保持旧存档兼容），但贴图用 eternal_star_time。
+                singleTexture(item.getId().getPath(), mcLoc("item/generated"),
+                        "layer0", modLoc("item/eternal_star_time"));
             } else if (value == ModItems.ETERNAL_SPAWN_EGG.get()) {
                 spawnEggItemModel(item.getId().getPath());
             } else {

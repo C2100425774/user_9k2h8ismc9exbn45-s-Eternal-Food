@@ -235,13 +235,24 @@ public class ModItems {
             ITEMS.register("eternal_firework_rocket",
                     () -> new EternalFireworkRocketItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
 
-    // 永恒之星：由下界之星、潮涌核心、嗅探兽蛋、龙息、下界合金锭、龙蛋、附魔金苹果、
+    // 永恒之星（时间）：由下界之星、潮涌核心、嗅探兽蛋、龙息、下界合金锭、龙蛋、附魔金苹果、
     // 紫水晶碎片、回响碎片无序合成（见 ModRecipeProvider）。可无限食用，食用后把玩家当前
     // 所有 buff 与 debuff 的持续时间改为无限（-1）；并可在铁砧中与药水 / 附魔永恒之鱼合成，
     // 把其效果变为无限（见 event/AnvilCombineHandler）。不进入 ETERNAL_TO_BASE。
+    // 贴图用永恒之星 - 时间.png（见 ModItemModelProvider 特判）；物品 id 保持 eternal_star 不变，
+    // 旧存档里的「永恒之星」升级后直接变成「永恒之星 - 时间」，不会丢失。
     public static final RegistryObject<Item> ETERNAL_STAR = ITEMS.register("eternal_star",
             () -> new EternalStarItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)
-                    .food(new FoodProperties.Builder().nutrition(0).saturationMod(0.0F).alwaysEat().fast().build())));
+                    .food(new FoodProperties.Builder().nutrition(0).saturationMod(0.0F).alwaysEat().fast().build()),
+                    EternalStarItem.Mode.TIME));
+
+    // 永恒之星（力量）：食用后把自身所有正面 buff 等级 +1（等级上限只有 1 的 buff 不变）；
+    // 铁砧中与药水 / 永恒药箭 / 附魔永恒之鱼合成时，同样把其中的 buff 等级 +1，
+    // 并保留药水原本的颜色。与「永恒之星 - 时间」在工作台里 1:1 互相转化。
+    public static final RegistryObject<Item> ETERNAL_STAR_POWER = ITEMS.register("eternal_star_power",
+            () -> new EternalStarItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)
+                    .food(new FoodProperties.Builder().nutrition(0).saturationMod(0.0F).alwaysEat().fast().build()),
+                    EternalStarItem.Mode.POWER));
 
     // 永恒满置域：长按 10 秒使用一次且不消耗，只能在主世界使用；蓄力时显示拉弓姿态，完成后
     // 播放不死图腾动画，创造模式飞行时也能用。使用后把玩家所在区块从「玩家下半身所在高度 - 1」

@@ -3,6 +3,7 @@ package cn.autoforged.eternal_food_mod_1789477527.event;
 import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
 import cn.autoforged.eternal_food_mod_1789477527.item.EternalEnchantedFishItem;
 import cn.autoforged.eternal_food_mod_1789477527.item.ModItems;
+import cn.autoforged.eternal_food_mod_1789477527.util.StarEffectHelper;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.nbt.CompoundTag;
@@ -30,12 +31,14 @@ import net.minecraftforge.fml.common.Mod;
  *   <li>附魔永恒之鱼 + 普通奶桶 / 永恒奶桶 / 永恒喷溅型奶瓶 → 永恒之鱼，清除全部继承效果，
  *       <b>并把这些继承来的饥饿值 / 饱和度一并重置</b>；</li>
  *   <li>附魔永恒之鱼 + 永恒奶桶plus / 永恒喷溅型奶瓶plus → 只清除继承的 debuff（食物属性保留）；</li>
- *   <li>永恒之星 + 药水（普通 / 喷溅 / 滞留，原版或永恒）、永恒药箭或附魔永恒之鱼 → 对应物品，
- *       其全部 buff 与 debuff 的持续时间改为无限（-1）；药水 / 药箭同时保留原有颜色；</li>
+ *   <li>永恒之星（时间）+ 药水（普通 / 喷溅 / 滞留，原版或永恒）、永恒药箭或附魔永恒之鱼 →
+ *       对应物品，其全部 buff 与 debuff 的持续时间改为无限（-1）；药水 / 药箭同时保留原有颜色；</li>
+ *   <li>永恒之星（力量）+ 同样的物品 → 对应物品，其中的正面 buff 等级 +1（等级上限只有 1 的
+ *       buff 不变），debuff 不动；药水 / 药箭同样保留原有颜色；</li>
  *   <li>以上操作均只消耗 1 级经验、无经验惩罚；铁砧破损沿用原版（{@code AnvilMenu#onTake}）。</li>
  * </ul>
  *
- * <p>取件时（{@link AnvilRepairEvent}）把被消耗的永恒之星 / 永恒奶制品重新放入玩家背包，
+ * <p>取件时（{@link AnvilRepairEvent}）把被消耗的永恒之星（按原类型）/ 永恒奶制品重新放入玩家背包，
  * 因此这些材料实际不会被消耗（合成本身仍照常扣 1 级经验、照常触发铁砧破损）。
  */
 @Mod.EventBusSubscriber(modid = EternalFoodMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -49,24 +52,28 @@ public class AnvilCombineHandler {
             return;
         }
 
-        // 永恒之星 + 「有药水标签的物品」（药水 / 永恒药水 / 喷溅 / 滞留变体）/ 永恒药箭
-        // 或附魔永恒之鱼：把其全部 buff 与 debuff 的持续时间改为无限（-1）。其他带 buff 的
-        // 食物（亵渎之鱼、迷之炖菜等）不属于药水类，因此不会被识别。永恒之星本身在取件时返还
+        // 两种永恒之星 + 「有药水标签的物品」（药水 / 永恒药水 / 喷溅 / 滞留变体）/ 永恒药箭
+        // 或附魔永恒之鱼：
+        //   时间之星 → 把其全部 buff 与 debuff 的持续时间改为无限（-1）；
+        //   力量之星 → 把其中的正面 buff 等级 +1（等级上限只有 1 的 buff 不变）。
+        // 两者都保留药水原本的颜色（写回 CustomPotionColor，见 convertPotion）。其他带 buff 的
+        // 食物（亵渎之鱼、迷之炖菜等）不属于药水类，因此不会被识别。星星本身在取件时返还
         // （见 onAnvilRepair）。
-        boolean leftStar = left.is(ModItems.ETERNAL_STAR.get());
-        boolean rightStar = right.is(ModItems.ETERNAL_STAR.get());
+        boolean leftStar = isEternalStar(left);
+        boolean rightStar = isEternalStar(right);
         if (leftStar != rightStar) {
+            ItemStack star = leftStar ? left : right;
             ItemStack other = leftStar ? right : left;
-            ItemStack infinite = null;
-            if (other.getItem() instanceof PotionItem) {
-                infinite = makePotionInfinite(other);
-            } else if (other.is(ModItems.ETERNAL_TIPPED_ARROW.get())) {
-                infinite = makePotionInfinite(other);
+            boolean time = star.is(ModItems.ETERNAL_STAR.get());
+            ItemStack converted = null;
+            if (other.getItem() instanceof PotionItem
+                    || other.is(ModItems.ETERNAL_TIPPED_ARROW.get())) {
+                converted = convertPotion(other, time);
             } else if (other.is(ModItems.ETERNAL_ENCHANTED_FISH.get())) {
-                infinite = makeFishInfinite(other);
+                converted = convertFish(other, time);
             }
-            if (infinite != null) {
-                acceptOutput(event, infinite);
+            if (converted != null) {
+                acceptOutput(event, converted);
                 return;
             }
         }
@@ -154,23 +161,44 @@ public class AnvilCombineHandler {
     }
 
     /**
-     * 把药水 / 永恒药箭（普通 / 喷溅 / 滞留，原版或永恒）的全部效果改为无限持续。原版药水 /
-     * 药箭的时长由 {@code Potion} 类型定义、无法直接修改，故把所有效果（含自定义效果）取出后
-     * 清空 {@code Potion} / {@code CustomPotionEffects}，再以 {@code CustomPotionEffects}
-     * 写回无限持续版本。瞬间效果没有时长概念，保持原样。
+     * 把药水 / 永恒药箭（普通 / 喷溅 / 滞留，原版或永恒）的全部效果按星星能力改写。
      *
-     * <p>清空 {@code Potion} 后 {@link PotionUtils#getColor} 会退化为空瓶色（见
-     * PotionUtils.java:79），故这里先把原色算出并以 {@code CustomPotionColor} 写回，保证
-     * 药水 / 药箭的颜色不丢失（{@code getColor} 优先返回 {@code CustomPotionColor}）。
+     * <p>原版药水的时长 / 等级由 {@code Potion} 类型定义、无法直接修改，故把所有效果
+     *（含自定义效果）取出后清空 {@code Potion} / {@code CustomPotionEffects}，再以
+     * {@code CustomPotionEffects} 写回改写后的版本：
+     * 时间之星 → 持续时间无限（瞬间效果没有时长概念，保持原样）；
+     * 力量之星 → 正面 buff 等级 +1（等级上限只有 1 的 buff 不变）。
      *
-     * @return 无限持续且保留原色的药水 / 药箭栈；没有任何效果（如水瓶）时返回 null（表示不合成）。
+     * <p>清空 {@code Potion} 后 {@link PotionUtils#getColor} 会退化为空瓶色，故先把原色算出并以
+     * {@code CustomPotionColor} 写回，保证药水 / 药箭的颜色不丢失（{@code getColor} 优先返回
+     * {@code CustomPotionColor}）。力量之星提升等级会改变「按效果平均」算出的颜色，写回原色同样
+     * 能保证颜色不变。
+     *
+     * @return 改写后且保留原色的药水 / 药箭栈；没有任何效果（如水瓶），或力量之星无事可做时返回
+     *         null（表示不合成）。
      */
-    private static ItemStack makePotionInfinite(ItemStack potion) {
+    private static ItemStack convertPotion(ItemStack potion, boolean time) {
         List<MobEffectInstance> effects = PotionUtils.getMobEffects(potion);
         if (effects.isEmpty()) {
             return null;
         }
-        // 清空 TAG_POTION 前先记录原色，避免渲染回退为空瓶色。
+        boolean changed = false;
+        List<MobEffectInstance> converted = new ArrayList<>();
+        for (MobEffectInstance instance : effects) {
+            if (time) {
+                converted.add(StarEffectHelper.withInfiniteDuration(instance));
+                changed = true;
+            } else if (StarEffectHelper.canRaiseLevel(instance)) {
+                converted.add(StarEffectHelper.withRaisedLevel(instance));
+                changed = true;
+            } else {
+                converted.add(instance);
+            }
+        }
+        if (!changed) {
+            // 力量之星对「只有等级上限 1 的 buff」或纯 debuff 药水没有任何效果，不合成。
+            return null;
+        }
         int color = PotionUtils.getColor(potion);
         ItemStack output = potion.copy();
         output.setCount(1);
@@ -180,8 +208,8 @@ public class AnvilCombineHandler {
             tag.remove(PotionUtils.TAG_CUSTOM_POTION_EFFECTS);
         }
         ListTag list = new ListTag();
-        for (MobEffectInstance instance : effects) {
-            list.add(toInfinite(instance).save(new CompoundTag()));
+        for (MobEffectInstance instance : converted) {
+            list.add(instance.save(new CompoundTag()));
         }
         output.getOrCreateTag().put(PotionUtils.TAG_CUSTOM_POTION_EFFECTS, list);
         output.getOrCreateTag().putInt(PotionUtils.TAG_CUSTOM_POTION_COLOR, color);
@@ -189,32 +217,40 @@ public class AnvilCombineHandler {
     }
 
     /**
-     * 把附魔永恒之鱼存储的全部继承效果改为无限持续。
+     * 把附魔永恒之鱼存储的全部效果按星星能力改写（时间 → 无限时长；力量 → 正面 buff 等级 +1）。
      *
-     * @return 效果无限持续的附魔永恒之鱼栈；没有任何继承效果时返回 null（表示不合成）。
+     * @return 改写后的附魔永恒之鱼栈；没有任何继承效果，或力量之星无事可做时返回 null（表示不合成）。
      */
-    private static ItemStack makeFishInfinite(ItemStack fish) {
+    private static ItemStack convertFish(ItemStack fish, boolean time) {
         List<MobEffectInstance> effects = EternalEnchantedFishItem.getBuffs(fish);
         if (effects.isEmpty()) {
             return null;
         }
-        List<MobEffectInstance> infinite = new ArrayList<>();
+        boolean changed = false;
+        List<MobEffectInstance> converted = new ArrayList<>();
         for (MobEffectInstance instance : effects) {
-            infinite.add(toInfinite(instance));
+            if (time) {
+                converted.add(StarEffectHelper.withInfiniteDuration(instance));
+                changed = true;
+            } else if (StarEffectHelper.canRaiseLevel(instance)) {
+                converted.add(StarEffectHelper.withRaisedLevel(instance));
+                changed = true;
+            } else {
+                converted.add(instance);
+            }
+        }
+        if (!changed) {
+            return null;
         }
         ItemStack output = fish.copy();
         output.setCount(1);
-        EternalEnchantedFishItem.setBuffs(output, infinite);
+        EternalEnchantedFishItem.setBuffs(output, converted);
         return output;
     }
 
-    /** 复制一个效果实例并把时长改为无限（-1）；瞬间效果无时长概念，保持原时长。 */
-    private static MobEffectInstance toInfinite(MobEffectInstance instance) {
-        int duration = instance.getEffect().isInstantenous()
-                ? instance.getDuration()
-                : MobEffectInstance.INFINITE_DURATION;
-        return new MobEffectInstance(instance.getEffect(), duration, instance.getAmplifier(),
-                instance.isAmbient(), instance.isVisible(), instance.showIcon());
+    /** 左边 / 右边是否是任意一种永恒之星（时间 / 力量）。 */
+    private static boolean isEternalStar(ItemStack stack) {
+        return stack.is(ModItems.ETERNAL_STAR.get()) || stack.is(ModItems.ETERNAL_STAR_POWER.get());
     }
 
     /**
@@ -239,16 +275,17 @@ public class AnvilCombineHandler {
         }
     }
 
-    /** 根据铁砧两个输入槽判断应返还的物品：永恒之星，或被消耗的永恒奶制品。 */
+    /** 根据铁砧两个输入槽判断应返还的物品：被消耗的永恒之星（按原类型返还），或被消耗的永恒奶制品。 */
     private static ItemStack refundOf(ItemStack left, ItemStack right) {
-        boolean leftStar = left.is(ModItems.ETERNAL_STAR.get());
-        boolean rightStar = right.is(ModItems.ETERNAL_STAR.get());
+        boolean leftStar = isEternalStar(left);
+        boolean rightStar = isEternalStar(right);
         if (leftStar != rightStar) {
+            ItemStack star = leftStar ? left : right;
             ItemStack other = leftStar ? right : left;
             if (other.getItem() instanceof PotionItem
                     || other.is(ModItems.ETERNAL_TIPPED_ARROW.get())
                     || other.is(ModItems.ETERNAL_ENCHANTED_FISH.get())) {
-                return new ItemStack(ModItems.ETERNAL_STAR.get());
+                return new ItemStack(star.getItem());
             }
         }
 
