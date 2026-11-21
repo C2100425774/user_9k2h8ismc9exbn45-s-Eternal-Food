@@ -168,7 +168,7 @@ public class EternalDispenserGunItem extends Item {
 
     /** 閰嶇疆鐣岄潰閲岀殑寮€鍏虫寜閽紙椤哄簭鍗崇晫闈㈤『搴忥級銆?*/
     public static final List<String> TOGGLE_KEYS = List.of(
-            CFG_INFINITY, CFG_FLAME, CFG_MULTISHOT, CFG_PIERCING, CFG_WATERPROOF, CFG_SILK);
+            CFG_INFINITY, CFG_FLAME, CFG_MULTISHOT, CFG_WATERPROOF, CFG_SILK);
 
     @Override
     public boolean isEnchantable(ItemStack stack) {
@@ -207,6 +207,18 @@ public class EternalDispenserGunItem extends Item {
 
     public static void setPower(ItemStack gun, int power) {
         gun.getOrCreateTag().putInt(CFG_POWER, Math.max(0, Math.min(5, power)));
+    }
+
+    /** 穿透等级 0~10（实际箭最多 4 级，界面允许调到 10）。 */
+    public static int getPiercing(ItemStack gun) {
+        if (gun.isEmpty() || !gun.hasTag()) {
+            return 0;
+        }
+        return Math.max(0, Math.min(10, gun.getTag().getInt(CFG_PIERCING)));
+    }
+
+    public static void setPiercing(ItemStack gun, int level) {
+        gun.getOrCreateTag().putInt(CFG_PIERCING, Math.max(0, Math.min(10, level)));
     }
 
     public static String optionNameKey(String key) {
@@ -303,6 +315,8 @@ public class EternalDispenserGunItem extends Item {
         }
         if (CFG_POWER.equals(key)) {
             setPower(gun, value);
+        } else if (CFG_PIERCING.equals(key)) {
+            setPiercing(gun, value);
         } else {
             setToggle(gun, key, value != 0);
         }
@@ -339,7 +353,7 @@ public class EternalDispenserGunItem extends Item {
 
         int powerLevel = getPower(gun);
         boolean flame = getToggle(gun, CFG_FLAME);
-        int piercing = getToggle(gun, CFG_PIERCING) ? 4 : 0;
+        int piercing = getPiercing(gun);
         boolean multishot = getToggle(gun, CFG_MULTISHOT);
         boolean waterproof = getToggle(gun, CFG_WATERPROOF);
         // 
@@ -651,8 +665,11 @@ public class EternalDispenserGunItem extends Item {
         if (getToggle(gun, CFG_MULTISHOT)) {
             lines.add(effectLine("multishot"));
         }
-        if (getToggle(gun, CFG_PIERCING)) {
-            lines.add(effectLine("piercing"));
+        int piercing = getPiercing(gun);
+        if (piercing > 0) {
+            lines.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.piercing", piercing)
+                    .withStyle(ChatFormatting.GRAY));
         }
         if (getToggle(gun, CFG_WATERPROOF)) {
             lines.add(effectLine("waterproof"));

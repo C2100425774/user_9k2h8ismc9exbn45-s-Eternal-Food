@@ -33,7 +33,7 @@ public final class GunProjectileTracker {
     /** 无限附魔：箭停住后的存活时间（0.5 秒）。 */
     public static final int INFINITE_STUCK_TICKS = 10;
     /** 无限附魔弹射物的安全寿命上限（防止卡在奇怪位置永远不消失）。 */
-    public static final int INFINITE_MAX_TICKS = 120;
+    public static final int INFINITE_MAX_TICKS = 100;
     /** 力量 V 弹射物的安全寿命上限（无重力后可能一直飞，避免实体堆积）。 */
     public static final int POWERED_MAX_TICKS = 400;
 
@@ -64,8 +64,6 @@ public final class GunProjectileTracker {
         INFINITE.add(entity);
         // 持久化标记：区块卸载 / 重新加载后扫描仍能认出这支箭
         entity.getPersistentData().putBoolean("EternalGunInfinite", true);
-        debug("mark infinite " + entity.getType().toString() + " at " + entity.blockPosition()
-                + " tick=" + entity.tickCount);
     }
 
     /** 每 5 tick 扫描一次所有已加载实体，兜底清理带持久标记的无限弹射物。 */
@@ -79,7 +77,8 @@ public final class GunProjectileTracker {
         }
         for (ServerLevel level : event.getServer().getAllLevels()) {
             for (Entity entity : level.getAllEntities()) {
-                if (!entity.isAlive()
+                // getAllEntities() 的底层数组可能包含 null（实体被移除后留下的空位）
+                if (entity == null || !entity.isAlive()
                         || !entity.getPersistentData().getBoolean("EternalGunInfinite")) {
                     continue;
                 }

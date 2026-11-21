@@ -164,14 +164,14 @@
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.power": "Power %s: reduces air drag and gravity of projectiles (level 5: no drag, no gravity)",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.flame": "Flame: sets projectiles on fire (items are not ignited)",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.multishot": "Multishot: fires 3 projectiles at once",
-  "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.piercing": "Piercing: arrow pierce level becomes 4",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.piercing": "Piercing %s: increases arrow pierce level (arrows cap at 4)",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.waterproof": "Waterproof: projectiles ignore water drag",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.silk_touch": "Silk Touch: fired objects have no spread",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.infinity": "Infinity: reads only slot 1; projectiles are not consumed and cannot be picked up; arrows vanish 0.5s after sticking",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.power": "Power: 0~5, higher means straighter projectiles (level 5: no gravity)",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.flame": "Flame: sets fired projectiles on fire",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.multishot": "Multishot: fires 3 projectiles (side arrows cannot be picked up)",
-  "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.piercing": "Piercing: arrows pierce multiple targets",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.piercing": "Piercing: 0~10, higher pierces more targets (arrows cap at 4)",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.waterproof": "Waterproof: projectiles ignore water drag",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.silk_touch": "Silk Touch: fired objects have no random spread",
   "gui.eternal_food_mod_1789477527.dispenser_gun.delay": "Fire interval: %s s",
@@ -187,5 +187,6 @@
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.piercing": "Piercing",
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.waterproof": "Waterproof",
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.silk_touch": "Silk Touch",
-  "itemGroup.eternal_food_mod_1789477527": "Eternal Vanilla Food"
+  "itemGroup.eternal_food_mod_1789477527": "Eternal Vanilla Food",
+  "gui.eternal_food_mod_1789477527.dispenser_gun.piercing": "Piercing: %s"
 }

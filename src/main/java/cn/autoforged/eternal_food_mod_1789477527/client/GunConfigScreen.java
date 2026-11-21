@@ -1,6 +1,5 @@
 package cn.autoforged.eternal_food_mod_1789477527.client;
 
-import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
 import cn.autoforged.eternal_food_mod_1789477527.item.EternalDispenserGunItem;
 import cn.autoforged.eternal_food_mod_1789477527.network.GunConfigPacket;
 import cn.autoforged.eternal_food_mod_1789477527.network.ModNetwork;
@@ -17,15 +16,21 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Shift+鍙抽敭鎵撳紑鐨勫彂灏勫櫒鏋厤缃晫闈細
- * 寮€鍏虫寜閽豢鑹?寮€鍚€佺孩鑹?鍏抽棴锛涘姏閲忔槸 0~5 鐨勬粦鏉★紱鎸夐挳鎮诞鏃朵細鏄剧ず璇存槑銆? */
+ * Shift+右键打开的发射器枪配置界面（紧凑面板，不占满整个屏幕）：
+ * 开关按钮绿色=开启、红色=关闭；力量 0~5、穿透 0~10 各一条一格的滑条。
+ */
 public class GunConfigScreen extends Screen {
 
-    private static final int ROW = 28;
+    private static final int PANEL_W = 320;
+    private static final int PANEL_H = 236;
+    private static final int ROW = 24;
 
     private final ItemStack gun;
     private final List<ToggleButton> toggles = new ArrayList<>();
-    private PowerSlider powerSlider;
+    private StepSlider powerSlider;
+    private StepSlider piercingSlider;
+    private int panelX;
+    private int panelY;
 
     public GunConfigScreen(ItemStack gun) {
         super(Component.translatable("gui.eternal_food_mod_1789477527.dispenser_gun.config"));
@@ -38,37 +43,58 @@ public class GunConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        int center = this.width / 2;
-        int top = 56;
+        this.panelX = (this.width - PANEL_W) / 2;
+        this.panelY = (this.height - PANEL_H) / 2;
+        int left = this.panelX + 10;
+        int top = this.panelY + 40;
         this.toggles.clear();
         for (int i = 0; i < EternalDispenserGunItem.TOGGLE_KEYS.size(); i++) {
             String key = EternalDispenserGunItem.TOGGLE_KEYS.get(i);
             int col = i % 2;
             int row = i / 2;
-            ToggleButton button = new ToggleButton(center - 140 + col * 145, top + row * ROW, 135, 20, key,
+            ToggleButton button = new ToggleButton(left + col * 150, top + row * ROW, 145, 20, key,
                     EternalDispenserGunItem.getToggle(this.gun, key));
             this.toggles.add(button);
             this.addRenderableWidget(button);
         }
-        int sliderY = top + 3 * ROW + 12;
-        this.powerSlider = new PowerSlider(center - 140, sliderY, 280, 20,
-                EternalDispenserGunItem.getPower(this.gun));
+        int sliderY = top + 3 * ROW + 4;
+        this.powerSlider = new StepSlider(left, sliderY, PANEL_W - 20, 20,
+                EternalDispenserGunItem.CFG_POWER, 0, 5, EternalDispenserGunItem.getPower(this.gun),
+                "gui.eternal_food_mod_1789477527.dispenser_gun.power");
         this.addRenderableWidget(this.powerSlider);
+        this.piercingSlider = new StepSlider(left, sliderY + 26, PANEL_W - 20, 20,
+                EternalDispenserGunItem.CFG_PIERCING, 0, 10, EternalDispenserGunItem.getPiercing(this.gun),
+                "gui.eternal_food_mod_1789477527.dispenser_gun.piercing");
+        this.addRenderableWidget(this.piercingSlider);
         this.addRenderableWidget(Button.builder(
                         Component.translatable("gui.eternal_food_mod_1789477527.dispenser_gun.done"),
                         button -> this.onClose())
-                .bounds(center - 50, sliderY + 34, 100, 20)
+                .bounds(this.panelX + PANEL_W / 2 - 50, sliderY + 60, 100, 20)
                 .build());
+    }
+
+    @Override
+    public void renderBackground(GuiGraphics graphics) {
+        // 不要整屏变暗，只画中间的小面板
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
+        graphics.fill(this.panelX, this.panelY, this.panelX + PANEL_W, this.panelY + PANEL_H,
+                0xE0101010);
+        int border = 0xFF909090;
+        graphics.fill(this.panelX, this.panelY, this.panelX + PANEL_W, this.panelY + 1, border);
+        graphics.fill(this.panelX, this.panelY + PANEL_H - 1,
+                this.panelX + PANEL_W, this.panelY + PANEL_H, border);
+        graphics.fill(this.panelX, this.panelY, this.panelX + 1, this.panelY + PANEL_H, border);
+        graphics.fill(this.panelX + PANEL_W - 1, this.panelY,
+                this.panelX + PANEL_W, this.panelY + PANEL_H, border);
         super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 0xFFFFFF);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, this.panelY + 8, 0xFFFFFF);
         graphics.drawCenteredString(this.font,
                 Component.translatable("gui.eternal_food_mod_1789477527.dispenser_gun.config_hint"),
-                this.width / 2, 34, 0xA0A0A0);
+                this.width / 2, this.panelY + 24, 0xA0A0A0);
         for (ToggleButton button : this.toggles) {
             if (button.isMouseOver(mouseX, mouseY)) {
                 graphics.renderTooltip(this.font,
@@ -80,6 +106,11 @@ public class GunConfigScreen extends Screen {
         if (this.powerSlider != null && this.powerSlider.isMouseOver(mouseX, mouseY)) {
             graphics.renderTooltip(this.font,
                     Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.option.power"),
+                    mouseX, mouseY);
+        }
+        if (this.piercingSlider != null && this.piercingSlider.isMouseOver(mouseX, mouseY)) {
+            graphics.renderTooltip(this.font,
+                    Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.option.piercing"),
                     mouseX, mouseY);
         }
     }
@@ -123,35 +154,45 @@ public class GunConfigScreen extends Screen {
         }
     }
 
-    private class PowerSlider extends AbstractSliderButton {
+    /** 一格一格的整数滑条（力量 0~5 / 穿透 0~10）。 */
+    private class StepSlider extends AbstractSliderButton {
 
-        PowerSlider(int x, int y, int width, int height, int power) {
-            super(x, y, width, height, Component.empty(), power / 5.0);
+        private final String key;
+        private final int min;
+        private final int max;
+        private final String labelKey;
+
+        StepSlider(int x, int y, int width, int height, String key, int min, int max, int value,
+                String labelKey) {
+            super(x, y, width, height, Component.empty(), (value - min) / (double) (max - min));
+            this.key = key;
+            this.min = min;
+            this.max = max;
+            this.labelKey = labelKey;
             this.updateMessage();
         }
 
-        private void applyToGun() {
-            int level = (int) Math.round(this.value * 5.0);
-            ModNetwork.CHANNEL.sendToServer(new GunConfigPacket(EternalDispenserGunItem.CFG_POWER, level));
+        int level() {
+            return this.min + (int) Math.round(this.value * (this.max - this.min));
         }
 
         @Override
         protected void updateMessage() {
-            int level = (int) Math.round(this.value * 5.0);
-            this.setMessage(Component.translatable(
-                    "gui.eternal_food_mod_1789477527.dispenser_gun.power", level));
+            this.setMessage(Component.translatable(this.labelKey, this.level()));
         }
 
         @Override
         protected void applyValue() {
+            // 吸附到整数格，拖到哪一格就显示哪一格，不会出现半格
+            int level = this.level();
+            this.value = (level - this.min) / (double) (this.max - this.min);
             this.updateMessage();
         }
 
         @Override
         public void onRelease(double mouseX, double mouseY) {
             super.onRelease(mouseX, mouseY);
-            this.applyToGun();
+            ModNetwork.CHANNEL.sendToServer(new GunConfigPacket(this.key, this.level()));
         }
     }
 }
-
