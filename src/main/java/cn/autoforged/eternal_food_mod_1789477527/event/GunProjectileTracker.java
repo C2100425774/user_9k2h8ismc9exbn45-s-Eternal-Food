@@ -95,13 +95,12 @@ public final class GunProjectileTracker {
                     continue;
                 }
                 int power = POWERED.get(entity);
+                PRE_TICK.put(entity, entity.getDeltaMovement());
                 if (power >= 5) {
                     entity.setNoGravity(true);
                     if (entity.tickCount >= POWERED_MAX_TICKS) {
                         entity.discard();
                     }
-                } else {
-                    PRE_TICK.put(entity, entity.getDeltaMovement());
                 }
             }
             for (Entity entity : new ArrayList<>(RIPTIDE)) {
@@ -158,15 +157,20 @@ public final class GunProjectileTracker {
             }
             Vec3 launch = LAUNCH.get(entity);
             Vec3 now = entity.getDeltaMovement();
-            if (launch != null && now.dot(launch) < -0.01) {
-                // 命中无敌目标被弹开：直接垂直落地，避免原路飞回
+            Vec3 before = PRE_TICK.remove(entity);
+            boolean deflected = launch != null && now.dot(launch) < -0.01;
+            // 被弹开时速度会骤降（原版把箭弹开并大幅减速），也一并判定
+            if (before != null && before.lengthSqr() > 0.01
+                    && now.lengthSqr() < before.lengthSqr() * 0.25) {
+                deflected = true;
+            }
+            if (deflected) {
+                // 不再原路飞回：直接垂直落地
                 entity.setDeltaMovement(0.0, -1.0, 0.0);
                 entity.setNoGravity(false);
-                PRE_TICK.remove(entity);
                 continue;
             }
-            Vec3 before = PRE_TICK.remove(entity);
-            if (before == null) {
+            if (before == null || POWERED.get(entity) >= 5) {
                 continue;
             }
             int power = POWERED.get(entity);

@@ -200,10 +200,15 @@ public class EternalDispenserGunItem extends Item {
     }
 
     public static int getPower(ItemStack gun) {
-        if (gun.isEmpty() || !gun.hasTag()) {
+        if (gun.isEmpty()) {
             return 0;
         }
-        return Math.max(0, Math.min(5, gun.getTag().getInt(CFG_POWER)));
+        int power = gun.hasTag() ? gun.getTag().getInt(CFG_POWER) : 0;
+        if (power <= 0) {
+            // 兼容旧版本用附魔「力量」的枪
+            power = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, gun);
+        }
+        return Math.max(0, Math.min(5, power));
     }
 
     public static void setPower(ItemStack gun, int power) {
