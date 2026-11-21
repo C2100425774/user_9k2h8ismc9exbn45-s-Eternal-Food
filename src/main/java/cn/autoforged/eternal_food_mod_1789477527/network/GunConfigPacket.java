@@ -36,6 +36,9 @@ public class GunConfigPacket {
             }
             ItemStack gun = player.getMainHandItem();
             EternalDispenserGunItem.applyConfig(gun, packet.key, packet.value);
+            // 改的是物品 NBT，主动标记并广播一次，保证关闭界面后客户端/存档都拿到新值
+            player.getInventory().setChanged();
+            player.containerMenu.broadcastChanges();
         });
         context.setPacketHandled(true);
     }

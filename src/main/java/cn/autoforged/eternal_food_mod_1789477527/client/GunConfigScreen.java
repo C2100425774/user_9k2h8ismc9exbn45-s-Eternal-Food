@@ -67,8 +67,13 @@ public class GunConfigScreen extends Screen {
                 EternalDispenserGunItem.CFG_PIERCING, 0, 10, EternalDispenserGunItem.getPiercing(this.gun),
                 "gui.eternal_food_mod_1789477527.dispenser_gun.piercing");
         this.addRenderableWidget(this.piercingSlider);
-        this.delaySlider = new DelaySlider(left, sliderY + 52, PANEL_W - 20, 20);
+        this.delaySlider = new DelaySlider(left, sliderY + 52, PANEL_W - 20 - 46, 20);
         this.addRenderableWidget(this.delaySlider);
+        this.addRenderableWidget(Button.builder(
+                        Component.translatable("gui.eternal_food_mod_1789477527.dispenser_gun.default"),
+                        button -> this.delaySlider.setTicks(EternalDispenserGunItem.DEFAULT_DELAY_TICKS))
+                .bounds(left + PANEL_W - 20 - 44, sliderY + 52, 44, 20)
+                .build());
     }
 
     @Override
@@ -235,6 +240,16 @@ public class GunConfigScreen extends Screen {
             return EternalDispenserGunItem.MIN_DELAY_TICKS
                     + (int) Math.round(this.value * (EternalDispenserGunItem.MAX_DELAY_TICKS
                             - EternalDispenserGunItem.MIN_DELAY_TICKS));
+        }
+
+        /** 「默认」按钮：立即回到默认间隔并同步。 */
+        void setTicks(int ticks) {
+            this.value = (ticks - EternalDispenserGunItem.MIN_DELAY_TICKS)
+                    / (double) (EternalDispenserGunItem.MAX_DELAY_TICKS
+                            - EternalDispenserGunItem.MIN_DELAY_TICKS);
+            this.updateMessage();
+            ModNetwork.CHANNEL.sendToServer(new GunConfigPacket(
+                    EternalDispenserGunItem.CFG_DELAY, this.ticks()));
         }
 
         @Override
