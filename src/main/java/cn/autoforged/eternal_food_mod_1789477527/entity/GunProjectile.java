@@ -39,6 +39,8 @@ public class GunProjectile extends ThrowableItemProjectile {
     private int powerLevel;
     private boolean infinite;
     private boolean riptide;
+    /** 力量 V 时固定使用的出膛速度（保证绝对直线）。 */
+    private Vec3 straightVelocity;
 
     public GunProjectile(EntityType<? extends GunProjectile> type, Level level) {
         super(type, level);
@@ -103,18 +105,26 @@ public class GunProjectile extends ThrowableItemProjectile {
     public void tick() {
         Vec3 before = this.getDeltaMovement();
         double f = Math.max(0, Math.min(this.powerLevel, 5)) / 5.0;
-        if (f > 0.0) {
-            // 力量：先补回「重力 × power/5」，配合末尾的速度还原实现减重 / 无重力
-            this.setDeltaMovement(before.add(0.0, 0.03 * f, 0.0));
+        if (f >= 1.0) {
+            // 力量 V：关重力 + 固定速度，走绝对直线（不会上下抖）
+            if (this.straightVelocity == null) {
+                this.straightVelocity = before;
+            }
+            this.setNoGravity(true);
+            this.setDeltaMovement(this.straightVelocity);
+            super.tick();
+            return;
         }
         super.tick();
         if (this.riptide && this.isInWater()) {
             // 激流：完全无视水阻力
             this.setDeltaMovement(before);
         } else if (f > 0.0) {
-            // 力量：把本 tick 损失的速度按 power/5 补回；5 级 = 完全还原（无阻力、无重力）
+            // 力量 1~4：补回一部分重力 + 一部分水平阻力
             Vec3 now = this.getDeltaMovement();
-            this.setDeltaMovement(now.add(before.subtract(now).scale(f)));
+            double nx = now.x + (before.x - now.x) * f;
+            double nz = now.z + (before.z - now.z) * f;
+            this.setDeltaMovement(nx, now.y + 0.03 * f, nz);
         }
     }
 

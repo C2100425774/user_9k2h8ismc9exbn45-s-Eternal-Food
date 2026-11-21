@@ -1,6 +1,7 @@
 package cn.autoforged.eternal_food_mod_1789477527.event;
 
 import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -17,20 +18,22 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * 发射器枪发射的原版 / 模组弹射物需要的外部记录：
+ * 发射器枪发射的原版 / 模组弹射物需要的外部记录。
+ *
+ * <p>力量附魔：
  * <ul>
- *   <li>力量附魔：按等级减少弹射物的空气阻力与重力；
- *       V 级时每 tick 把速度还原成 tick 前的值 = 无阻力、无重力、指哪打哪；</li>
- *   <li>无限附魔：箭类停住 0.5 秒后消失，避免连发卡顿；</li>
- *   <li>激流附魔：在水中把速度还原成 tick 前 = 无视水阻力。</li>
+ *   <li>5 级：关闭重力并把速度每 tick 固定为出膛速度 → 绝对直线、不会上下抖；</li>
+ *   <li>1~4 级：每 tick 补回「重力 × power/5」（减重）+ 补回水平阻力的一部分（减阻）。</li>
  * </ul>
- * 未附魔时不跟踪，弹射物行为与原版一致。
+ * 另外还负责：无限附魔箭落地 0.5 秒消失、激流水里无视阻力。
  */
 @Mod.EventBusSubscriber(modid = EternalFoodMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class GunProjectileTracker {
 
     /** 无限附魔：箭停住后的存活时间（0.5 秒）。 */
     public static final int INFINITE_STUCK_TICKS = 10;
+    /** 无限附魔弹射物的安全寿命上限（防止卡在奇怪位置永远不消失）。 */
+    public static final int INFINITE_MAX_TICKS = 200;
 
     private static final Set<Entity> INFINITE = Collections.synchronizedSet(
             Collections.newSetFromMap(new WeakHashMap<>()));
@@ -38,30 +41,29 @@ public final class GunProjectileTracker {
     private static final Set<Entity> RIPTIDE = Collections.synchronizedSet(
             Collections.newSetFromMap(new WeakHashMap<>()));
     private static final Map<Entity, Integer> POWERED = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<Entity, Vec3> LAUNCH = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
 
     private GunProjectileTracker() {
     }
 
-    /** 无限附魔发射的弹射物：箭类停住 0.5 秒后丢弃。 */
     public static void markInfinite(Entity entity) {
         INFINITE.add(entity);
     }
 
-    /** 激流附魔发射的弹射物：水里无视阻力。 */
     public static void markRiptide(Entity entity) {
         RIPTIDE.add(entity);
     }
 
-    /** 力量附魔发射的弹射物：减少空气阻力 + 重力（等级 1~5）。 */
+    /** 力量附魔：记录等级与出膛速度。 */
     public static void markPowered(Entity entity, int level) {
         int clamped = Math.max(0, Math.min(5, level));
         if (clamped > 0) {
             POWERED.put(entity, clamped);
+            LAUNCH.put(entity, entity.getDeltaMovement());
         }
     }
 
-    /** 每 tick 的重力（不同弹射物不一样）。 */
     private static double gravityOf(Entity entity) {
         if (entity instanceof AbstractArrow) {
             return 0.05;
@@ -81,20 +83,23 @@ public final class GunProjectileTracker {
             return;
         }
         if (event.phase == TickEvent.Phase.START) {
-            // 先记录 tick 前速度（力量和激流都用它作为目标速度）
-            for (Entity entity : new java.util.ArrayList<>(POWERED.keySet())) {
-                if (entity.isAlive() && entity.level() == level) {
-                    Vec3 before = entity.getDeltaMovement();
-                    PRE_TICK.put(entity, before);
-                    int power = POWERED.get(entity);
-                    double f = power / 5.0;
-                    double gravity = gravityOf(entity) * f;
-                    if (gravity > 0.0) {
-                        entity.setDeltaMovement(before.add(0.0, gravity, 0.0));
+            for (Entity entity : new ArrayList<>(POWERED.keySet())) {
+                if (!entity.isAlive() || entity.level() != level) {
+                    continue;
+                }
+                int power = POWERED.get(entity);
+                if (power >= 5) {
+                    // 5 级：关重力 + 固定速度，走绝对直线
+                    entity.setNoGravity(true);
+                    Vec3 launch = LAUNCH.get(entity);
+                    if (launch != null) {
+                        entity.setDeltaMovement(launch);
                     }
+                } else {
+                    PRE_TICK.put(entity, entity.getDeltaMovement());
                 }
             }
-            for (Entity entity : new java.util.ArrayList<>(RIPTIDE)) {
+            for (Entity entity : new ArrayList<>(RIPTIDE)) {
                 if (entity.isAlive() && entity.level() == level && entity.isInWater()
                         && !PRE_TICK.containsKey(entity)) {
                     PRE_TICK.put(entity, entity.getDeltaMovement());
@@ -102,7 +107,7 @@ public final class GunProjectileTracker {
             }
             return;
         }
-        // END
+        // END -----------------------------------------------------------------
         Iterator<Entity> infiniteIt = INFINITE.iterator();
         while (infiniteIt.hasNext()) {
             Entity entity = infiniteIt.next();
@@ -111,10 +116,15 @@ public final class GunProjectileTracker {
                 STUCK_TICKS.remove(entity);
                 continue;
             }
-            if (entity instanceof AbstractArrow arrow && arrow.getDeltaMovement().lengthSqr() < 1.0E-4) {
+            boolean stuck = entity instanceof AbstractArrow arrow
+                    && (arrow.onGround() || arrow.getDeltaMovement().lengthSqr() < 0.0025);
+            if (entity.tickCount >= INFINITE_MAX_TICKS) {
+                stuck = true;
+            }
+            if (stuck) {
                 int ticks = STUCK_TICKS.getOrDefault(entity, 0) + 1;
                 if (ticks >= INFINITE_STUCK_TICKS) {
-                    arrow.discard();
+                    entity.discard();
                     infiniteIt.remove();
                     STUCK_TICKS.remove(entity);
                 } else {
@@ -122,11 +132,12 @@ public final class GunProjectileTracker {
                 }
             }
         }
-        // 力量：把本 tick 损失的「空气阻力 + 重力」补回 power/5（5 级 = 完全还原）
-        for (Entity entity : new java.util.ArrayList<>(POWERED.keySet())) {
+        // 力量 1~4：补回一部分重力 + 一部分水平阻力（不做整体还原，避免上下抖）
+        for (Entity entity : new ArrayList<>(POWERED.keySet())) {
             Vec3 before = PRE_TICK.remove(entity);
             if (!entity.isAlive() || entity.level() != level) {
                 POWERED.remove(entity);
+                LAUNCH.remove(entity);
                 continue;
             }
             if (before == null) {
@@ -135,10 +146,13 @@ public final class GunProjectileTracker {
             int power = POWERED.get(entity);
             double f = power / 5.0;
             Vec3 now = entity.getDeltaMovement();
-            entity.setDeltaMovement(now.add(before.subtract(now).scale(f)));
+            double gravity = gravityOf(entity) * f;
+            double nx = now.x + (before.x - now.x) * f;
+            double nz = now.z + (before.z - now.z) * f;
+            entity.setDeltaMovement(nx, now.y + gravity, nz);
         }
-        // 激流：水里无视阻力（最后应用，优先级最高）
-        for (Entity entity : new java.util.ArrayList<>(RIPTIDE)) {
+        // 激流：水中无视阻力（最后应用）
+        for (Entity entity : new ArrayList<>(RIPTIDE)) {
             Vec3 before = PRE_TICK.remove(entity);
             if (!entity.isAlive() || entity.level() != level) {
                 continue;

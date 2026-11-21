@@ -301,7 +301,11 @@ public class EternalDispenserGunItem extends Item {
         }
 
         boolean spawnEgg = single.getItem() instanceof SpawnEggItem;
-        boolean projectileAmmo = spawnEgg || isProjectileAmmo(single);
+        // 无限附魔的发射器枪不能把末影珍珠当弹射物打（否则连发传送容易暴毙），只能当一般物品发射
+        boolean enderPearl = single.is(Items.ENDER_PEARL)
+                || single.is(ModItems.ETERNAL_ENDER_PEARL.get());
+        boolean projectileAmmo = spawnEgg
+                || (isProjectileAmmo(single) && !(infinity && enderPearl));
         boolean eternalAmmo = isEternalItem(single);
 
         for (int i = 0; i < directions.size(); i++) {
