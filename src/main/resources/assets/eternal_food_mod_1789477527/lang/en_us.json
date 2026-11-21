@@ -156,7 +156,8 @@
   "item.eternal_food_mod_1789477527.eternal_dispenser_gun": "Dispenser Gun",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.usage": "Right-click: fire the loaded ammo toward your crosshair; hold to fire continuously",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.delay": "Fire interval: %s s (Shift+right-click to adjust)",
-  "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchants": "Enchantments: Infinity / Power / Flame / Multishot / Piercing / Riptide",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchants": "Enchantments: Infinity / Power / Flame / Multishot / Piercing / Riptide / Silk Touch",
   "gui.eternal_food_mod_1789477527.dispenser_gun.delay": "Fire interval: %s s",
+  "gui.eternal_food_mod_1789477527.dispenser_gun.default": "Default",
   "itemGroup.eternal_food_mod_1789477527": "Eternal Vanilla Food"
 }

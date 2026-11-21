@@ -1,5 +1,6 @@
 package cn.autoforged.eternal_food_mod_1789477527.item;
 
+import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
 import cn.autoforged.eternal_food_mod_1789477527.entity.GunProjectile;
 import cn.autoforged.eternal_food_mod_1789477527.entity.ThrownEternalMilk;
 import cn.autoforged.eternal_food_mod_1789477527.entity.ThrownEternalPotion;
@@ -64,8 +65,8 @@ import net.minecraftforge.network.NetworkHooks;
  */
 public class EternalDispenserGunItem extends Item {
 
-    /** 最快：每红石刻一次 = 2 tick。 */
-    public static final int MIN_DELAY_TICKS = 2;
+    /** 最快：每 tick 一次 = 1 tick。 */
+    public static final int MIN_DELAY_TICKS = 1;
     /** 最慢：1.5 秒 = 30 tick。 */
     public static final int MAX_DELAY_TICKS = 30;
     /** 默认：1 秒。 */
@@ -173,6 +174,7 @@ public class EternalDispenserGunItem extends Item {
                 || enchantment == Enchantments.MULTISHOT
                 || enchantment == Enchantments.PIERCING
                 || enchantment == Enchantments.RIPTIDE
+                || enchantment == Enchantments.SILK_TOUCH
                 || super.canApplyAtEnchantingTable(stack, enchantment);
     }
 
@@ -285,6 +287,9 @@ public class EternalDispenserGunItem extends Item {
         int piercing = ench(gun, Enchantments.PIERCING);
         boolean multishot = ench(gun, Enchantments.MULTISHOT) > 0;
         boolean riptide = ench(gun, Enchantments.RIPTIDE) > 0;
+        // 精准采集：发射出去的物品不再偏移（散布为 0）
+        boolean silk = ench(gun, Enchantments.SILK_TOUCH) > 0;
+        float uncertainty = silk ? 0.0F : 6.0F;
 
         List<Vec3> directions = new ArrayList<>(3);
         if (multishot) {
@@ -297,19 +302,20 @@ public class EternalDispenserGunItem extends Item {
 
         boolean spawnEgg = single.getItem() instanceof SpawnEggItem;
         boolean projectileAmmo = spawnEgg || isProjectileAmmo(single);
+        boolean eternalAmmo = isEternalItem(single);
 
         for (Vec3 direction : directions) {
             if (projectileAmmo) {
                 spawnProjectileAmmo(level, player, single.copy(), origin, direction,
-                        powerLevel, flame, piercing, infinity, riptide);
+                        powerLevel, flame, piercing, infinity, riptide, uncertainty, silk);
             } else {
                 spawnItemAmmo(level, player, single.copy(), origin, direction,
-                        powerLevel, false, riptide);
+                        powerLevel, riptide, uncertainty);
             }
         }
 
-        // 无限附魔只对「弹射物类」生效；普通物品照常消耗
-        if (!(infinity && projectileAmmo)) {
+        // 模组的永恒物品发射后不消耗；无限附魔只对「弹射物类」生效；其余照常消耗
+        if (!eternalAmmo && !(infinity && projectileAmmo)) {
             ammo.shrink(1);
             setAmmo(gun, slot, ammo.isEmpty() ? ItemStack.EMPTY : ammo);
         }
@@ -357,34 +363,38 @@ public class EternalDispenserGunItem extends Item {
 
     /** 刷怪蛋走 {@link GunProjectile}，命中时生成生物；其他非投掷物走物品模式。 */
     private void spawnItemAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
-            Vec3 direction, int powerLevel, boolean flame, boolean riptide) {
+            Vec3 direction, int powerLevel, boolean riptide, float uncertainty) {
         GunProjectile projectile = new GunProjectile(level, origin.x, origin.y, origin.z, ammo);
         projectile.setMode(GunProjectile.MODE_ITEM);
         projectile.setPowerLevel(powerLevel);
         projectile.setRiptide(riptide);
         projectile.setOwner(player);
-        projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, 6.0F);
+        projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, uncertainty);
         level.addFreshEntity(projectile);
+    }
+
+    /** 发射器枪也能发射模组的永恒物品——这些物品不消耗。 */
+    private static boolean isEternalItem(ItemStack stack) {
+        var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem());
+        return key != null && EternalFoodMod.MOD_ID.equals(key.getNamespace());
     }
 
     private void spawnProjectileAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
             Vec3 direction, int powerLevel, boolean flame, int piercing, boolean infinity,
-            boolean riptide) {
+            boolean riptide, float uncertainty, boolean silk) {
+        boolean creative = player.isCreative();
         if (ammo.getItem() instanceof SpawnEggItem) {
             GunProjectile projectile = new GunProjectile(level, origin.x, origin.y, origin.z, ammo);
             projectile.setMode(GunProjectile.MODE_SPAWN_EGG);
+            // 刷怪蛋弹射物命中即生成生物，不存在拾取问题，所以无限附魔照常缩短寿命
             projectile.setInfinite(infinity);
             projectile.setRiptide(riptide);
             projectile.setOwner(player);
-            projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, 6.0F);
+            projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, uncertainty);
             level.addFreshEntity(projectile);
-            if (infinity) {
-                // 无限附魔的刷怪蛋弹射物也缩短存活
-                projectile.setInfinite(true);
-            }
             return;
         }
-        Projectile projectile = createProjectile(level, player, ammo, origin, direction);
+        Projectile projectile = createProjectile(level, player, ammo, origin, direction, silk);
         if (projectile == null) {
             return;
         }
@@ -393,7 +403,7 @@ public class EternalDispenserGunItem extends Item {
                 || projectile instanceof LargeFireball
                 || projectile instanceof WitherSkull;
         if (!customShot) {
-            projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, 6.0F);
+            projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, uncertainty);
         }
         projectile.setOwner(player);
         if (flame) {
@@ -404,9 +414,13 @@ public class EternalDispenserGunItem extends Item {
         }
         if (infinity) {
             if (projectile instanceof AbstractArrow arrow) {
-                arrow.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
+                // 创造模式仍然可以捡回来；生存模式不可拾取
+                arrow.pickup = creative ? AbstractArrow.Pickup.ALLOWED
+                        : AbstractArrow.Pickup.CREATIVE_ONLY;
             }
-            GunProjectileTracker.markInfinite(projectile, INFINITE_LIFETIME_TICKS);
+            if (!creative) {
+                GunProjectileTracker.markInfinite(projectile, INFINITE_LIFETIME_TICKS);
+            }
         }
         if (riptide) {
             GunProjectileTracker.markRiptide(projectile);
@@ -415,14 +429,14 @@ public class EternalDispenserGunItem extends Item {
     }
 
     private static Projectile createProjectile(ServerLevel level, Player player, ItemStack ammo,
-            Vec3 origin, Vec3 direction) {
+            Vec3 origin, Vec3 direction, boolean silk) {
         Item item = ammo.getItem();
         RandomSource random = level.random;
 
         if (item == Items.FIRE_CHARGE || ammo.is(ModItems.ETERNAL_FIRE_CHARGE.get())) {
-            double dx = random.triangle(direction.x, 0.11485);
-            double dy = random.triangle(direction.y, 0.11485);
-            double dz = random.triangle(direction.z, 0.11485);
+            double dx = silk ? direction.x : random.triangle(direction.x, 0.11485);
+            double dy = silk ? direction.y : random.triangle(direction.y, 0.11485);
+            double dz = silk ? direction.z : random.triangle(direction.z, 0.11485);
             SmallFireball fireball = new SmallFireball(level,
                     origin.x + direction.x * 0.3, origin.y + direction.y * 0.3, origin.z + direction.z * 0.3,
                     dx, dy, dz);
@@ -430,18 +444,15 @@ public class EternalDispenserGunItem extends Item {
             return fireball;
         }
         if (ammo.is(ModItems.ETERNAL_FIREBALL.get())) {
-            return heavyProjectile(level, origin, direction, random, true);
+            return heavyProjectile(level, origin, direction, random, true, silk);
         }
-        if (ammo.is(ModItems.ETERNAL_WITHER_SKULL.get())) {
-            return heavyProjectile(level, origin, direction, random, false);
-        }
-        if (ammo.is(ModItems.ETERNAL_WITHER_SKULL_BLUE.get())) {
-            return heavyProjectile(level, origin, direction, random, false);
+        if (ammo.is(ModItems.ETERNAL_WITHER_SKULL.get()) || ammo.is(ModItems.ETERNAL_WITHER_SKULL_BLUE.get())) {
+            return heavyProjectile(level, origin, direction, random, false, silk);
         }
         if (item == Items.FIREWORK_ROCKET || ammo.is(ModItems.ETERNAL_FIREWORK_ROCKET.get())) {
             FireworkRocketEntity rocket = new FireworkRocketEntity(level, ammo,
                     origin.x, origin.y, origin.z, true);
-            rocket.shoot(direction.x, direction.y, direction.z, 0.5F, 1.0F);
+            rocket.shoot(direction.x, direction.y, direction.z, 0.5F, silk ? 0.0F : 1.0F);
             return rocket;
         }
         if (item == Items.ARROW || item == Items.TIPPED_ARROW) {
@@ -502,9 +513,9 @@ public class EternalDispenserGunItem extends Item {
         return null;
     }
 
-    /** 恶魂火球 / 凋灵之首：与发射器一致，用三角形散布 + 0.1 推进力。 */
+    /** 恶魂火球 / 凋灵之首：与发射器一致，用三角形散布 + 0.1 推进力（精准采集时散布为 0）。 */
     private static AbstractHurtingProjectile heavyProjectile(ServerLevel level, Vec3 origin,
-            Vec3 direction, RandomSource random, boolean fireball) {
+            Vec3 direction, RandomSource random, boolean fireball, boolean silk) {
         AbstractHurtingProjectile projectile;
         if (fireball) {
             projectile = new LargeFireball(EntityType.FIREBALL, level);
@@ -514,9 +525,9 @@ public class EternalDispenserGunItem extends Item {
         }
         projectile.setPos(origin.x + direction.x * 0.3, origin.y + direction.y * 0.3,
                 origin.z + direction.z * 0.3);
-        double dx = random.triangle(direction.x, 0.11485);
-        double dy = random.triangle(direction.y, 0.11485);
-        double dz = random.triangle(direction.z, 0.11485);
+        double dx = silk ? direction.x : random.triangle(direction.x, 0.11485);
+        double dy = silk ? direction.y : random.triangle(direction.y, 0.11485);
+        double dz = silk ? direction.z : random.triangle(direction.z, 0.11485);
         double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
         if (length != 0.0) {
             projectile.xPower = dx / length * 0.1;
