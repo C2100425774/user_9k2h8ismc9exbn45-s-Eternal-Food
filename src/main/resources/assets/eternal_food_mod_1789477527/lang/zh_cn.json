@@ -160,7 +160,7 @@
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.shift": "按住 Shift 查看附魔效果",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.no_enchant": "（未附魔）",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.infinity": "无限：只读取第 1 格；弹射物不被消耗、不可拾取，箭落地 0.5 秒后消失",
-  "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.power": "力量：减少物品弹射物的空气阻力（V 级无阻力）",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.power": "力量：减少弹射物的空气阻力与重力（V 级无阻力、无重力，指哪打哪）",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.flame": "火矢：点燃弹射物（不会点燃物品）",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.multishot": "多重射击：每次发射 3 发弹射物",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.piercing": "穿透：箭的穿透等级提升",

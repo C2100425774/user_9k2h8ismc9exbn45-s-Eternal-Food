@@ -160,7 +160,7 @@
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.shift": "Hold Shift to view enchantment effects",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.no_enchant": "(No enchantments)",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.infinity": "Infinity: reads only the first slot; projectiles are not consumed and cannot be picked up; arrows vanish 0.5s after sticking",
-  "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.power": "Power: reduces air drag of item projectiles (no drag at level V)",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.power": "Power: reduces air drag and gravity of projectiles (no drag and no gravity at level V)",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.flame": "Flame: sets projectiles on fire (items are not ignited)",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.multishot": "Multishot: fires 3 projectiles at once",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.piercing": "Piercing: increases arrow pierce level",

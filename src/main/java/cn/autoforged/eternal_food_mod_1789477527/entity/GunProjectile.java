@@ -102,18 +102,19 @@ public class GunProjectile extends ThrowableItemProjectile {
     @Override
     public void tick() {
         Vec3 before = this.getDeltaMovement();
+        double f = Math.max(0, Math.min(this.powerLevel, 5)) / 5.0;
+        if (f > 0.0) {
+            // 力量：先补回「重力 × power/5」，配合末尾的速度还原实现减重 / 无重力
+            this.setDeltaMovement(before.add(0.0, 0.03 * f, 0.0));
+        }
         super.tick();
         if (this.riptide && this.isInWater()) {
             // 激流：完全无视水阻力
             this.setDeltaMovement(before);
-        } else if (this.getMode() == MODE_ITEM && this.powerLevel > 0) {
-            // 力量：把本 tick 损失的水平速度补回 power/5，5 级即无空气阻力
+        } else if (f > 0.0) {
+            // 力量：把本 tick 损失的速度按 power/5 补回；5 级 = 完全还原（无阻力、无重力）
             Vec3 now = this.getDeltaMovement();
-            Vec3 beforeH = new Vec3(before.x, 0.0, before.z);
-            Vec3 nowH = new Vec3(now.x, 0.0, now.z);
-            double factor = Math.min(this.powerLevel, 5) / 5.0;
-            Vec3 fixed = nowH.add(beforeH.subtract(nowH).scale(factor));
-            this.setDeltaMovement(fixed.x, now.y, fixed.z);
+            this.setDeltaMovement(now.add(before.subtract(now).scale(f)));
         }
     }
 

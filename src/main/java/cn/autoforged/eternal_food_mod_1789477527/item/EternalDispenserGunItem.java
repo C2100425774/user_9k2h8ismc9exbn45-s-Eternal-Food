@@ -392,6 +392,7 @@ public class EternalDispenserGunItem extends Item {
             projectile.setMode(GunProjectile.MODE_SPAWN_EGG);
             projectile.setInfinite(false);
             projectile.setRiptide(riptide);
+            projectile.setPowerLevel(powerLevel);
             projectile.setOwner(player);
             projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, uncertainty);
             level.addFreshEntity(projectile);
@@ -429,6 +430,11 @@ public class EternalDispenserGunItem extends Item {
         }
         if (riptide) {
             GunProjectileTracker.markRiptide(projectile);
+        }
+        // 力量：减少空气阻力 + 重力（火球 / 烟花这类不按普通物理飞的不处理）
+        if (!(projectile instanceof AbstractHurtingProjectile)
+                && !(projectile instanceof FireworkRocketEntity)) {
+            GunProjectileTracker.markPowered(projectile, powerLevel);
         }
         level.addFreshEntity(projectile);
     }
