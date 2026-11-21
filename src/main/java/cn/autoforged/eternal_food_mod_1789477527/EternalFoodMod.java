@@ -6,6 +6,7 @@ import cn.autoforged.eternal_food_mod_1789477527.effect.ModEffects;
 import cn.autoforged.eternal_food_mod_1789477527.entity.ModEntities;
 import cn.autoforged.eternal_food_mod_1789477527.event.ModCreativeTabs;
 import cn.autoforged.eternal_food_mod_1789477527.item.ModItems;
+import cn.autoforged.eternal_food_mod_1789477527.menu.ModMenus;
 import cn.autoforged.eternal_food_mod_1789477527.network.ModNetwork;
 import cn.autoforged.eternal_food_mod_1789477527.recipe.ModRecipes;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -25,6 +26,7 @@ public class EternalFoodMod {
         ModEffects.register(modEventBus);
         ModEntities.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
+        ModMenus.register(modEventBus);
         ModRecipes.register(modEventBus);
         ModNetwork.register();
     }

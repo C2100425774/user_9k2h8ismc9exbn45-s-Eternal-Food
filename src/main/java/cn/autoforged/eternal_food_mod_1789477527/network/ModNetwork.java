@@ -47,6 +47,10 @@ public final class ModNetwork {
                 ClockTimePacket::encode,
                 ClockTimePacket::decode,
                 ClockTimePacket::handle);
+        CHANNEL.registerMessage(id++, GunSetDelayPacket.class,
+                GunSetDelayPacket::encode,
+                GunSetDelayPacket::decode,
+                GunSetDelayPacket::handle);
     }
 
     /** 让指定玩家客户端用 {@code stack} 播放一次不死图腾激活动画（仅服务端调用）。 */

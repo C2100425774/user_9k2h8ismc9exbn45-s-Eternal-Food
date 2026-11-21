@@ -153,5 +153,10 @@
   "item.eternal_food_mod_1789477527.eternal_wither_skull": "永恒凋灵之首",
   "item.eternal_food_mod_1789477527.eternal_wither_skull_blue": "永恒蓝色凋灵之首",
   "item.eternal_food_mod_1789477527.eternal_spawn_egg": "永恒刷怪蛋",
+  "item.eternal_food_mod_1789477527.eternal_dispenser_gun": "发射器枪",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.usage": "右键：朝准星方向发射弹仓里的弹药；长按右键连续发射",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.delay": "发射间隔：%s 秒（Shift+右键调整）",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchants": "可用附魔：无限 / 力量 / 火矢 / 多重射击 / 穿透 / 激流",
+  "gui.eternal_food_mod_1789477527.dispenser_gun.delay": "发射间隔：%s 秒",
   "itemGroup.eternal_food_mod_1789477527": "永恒原版食物"
 }

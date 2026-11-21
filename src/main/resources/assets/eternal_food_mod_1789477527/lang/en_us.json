@@ -153,5 +153,10 @@
   "item.eternal_food_mod_1789477527.eternal_wither_skull": "Eternal Wither Skull",
   "item.eternal_food_mod_1789477527.eternal_wither_skull_blue": "Eternal Blue Wither Skull",
   "item.eternal_food_mod_1789477527.eternal_spawn_egg": "Eternal Spawn Egg",
+  "item.eternal_food_mod_1789477527.eternal_dispenser_gun": "Dispenser Gun",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.usage": "Right-click: fire the loaded ammo toward your crosshair; hold to fire continuously",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.delay": "Fire interval: %s s (Shift+right-click to adjust)",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchants": "Enchantments: Infinity / Power / Flame / Multishot / Piercing / Riptide",
+  "gui.eternal_food_mod_1789477527.dispenser_gun.delay": "Fire interval: %s s",
   "itemGroup.eternal_food_mod_1789477527": "Eternal Vanilla Food"
 }

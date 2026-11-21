@@ -4,6 +4,8 @@ import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
 import cn.autoforged.eternal_food_mod_1789477527.entity.ModEntities;
 import cn.autoforged.eternal_food_mod_1789477527.item.EternalSpawnEggItem;
 import cn.autoforged.eternal_food_mod_1789477527.item.ModItems;
+import cn.autoforged.eternal_food_mod_1789477527.menu.ModMenus;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.resources.ResourceLocation;
@@ -25,6 +27,7 @@ public class ModClientEvents {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(ModEntities.THROWN_ETERNAL_MILK.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(ModEntities.THROWN_ETERNAL_POTION.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModEntities.GUN_PROJECTILE.get(), ThrownItemRenderer::new);
         // 永恒数字钟：正面用 7 段数码管实时画 HH:MM。
         event.registerBlockEntityRenderer(
                 cn.autoforged.eternal_food_mod_1789477527.block.entity.ModBlockEntities.ETERNAL_CLOCK.get(),
@@ -58,6 +61,13 @@ public class ModClientEvents {
      * （{@code ItemProperties.register} 是覆盖语义），把永恒烟花也视为烟花即可，无需改动弩本身的
      * 代码或资源。
      */
+    /** 发射器枪界面。 */
+    @SubscribeEvent
+    public static void registerMenuScreens(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> MenuScreens.register(ModMenus.GUN.get(),
+                EternalDispenserGunScreen::new));
+    }
+
     @SubscribeEvent
     public static void registerItemProperties(FMLClientSetupEvent event) {
         event.enqueueWork(() -> ItemProperties.register(Items.CROSSBOW,

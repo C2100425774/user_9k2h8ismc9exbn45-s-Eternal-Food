@@ -1,0 +1,85 @@
+{
+  "credit": "永恒原版食物 · 发射器枪（全部使用原版材质）",
+  "gui_light": "side",
+  "textures": {
+    "particle": "minecraft:block/furnace_side",
+    "dispenser_front": "minecraft:block/dispenser_front",
+    "dispenser_side": "minecraft:block/furnace_side",
+    "dispenser_top": "minecraft:block/furnace_top",
+    "stone": "minecraft:block/stone",
+    "cobblestone": "minecraft:block/cobblestone"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": { "texture": "#dispenser_front", "uv": [0, 0, 16, 16] },
+        "south": { "texture": "#dispenser_side" },
+        "east": { "texture": "#dispenser_side" },
+        "west": { "texture": "#dispenser_side" },
+        "up": { "texture": "#dispenser_top" },
+        "down": { "texture": "#dispenser_top" }
+      }
+    },
+    {
+      "from": [5, 6, 16],
+      "to": [11, 10, 18],
+      "faces": {
+        "south": { "texture": "#stone", "uv": [5, 6, 11, 10] },
+        "up": { "texture": "#stone", "uv": [5, 14, 11, 16] },
+        "down": { "texture": "#stone", "uv": [5, 14, 11, 16] },
+        "east": { "texture": "#stone", "uv": [6, 14, 10, 16] },
+        "west": { "texture": "#stone", "uv": [6, 14, 10, 16] }
+      }
+    },
+    {
+      "from": [4, 1, -16],
+      "to": [12, 9, 0],
+      "faces": {
+        "north": { "texture": "#cobblestone" },
+        "up": { "texture": "#cobblestone" },
+        "down": { "texture": "#cobblestone" },
+        "east": { "texture": "#cobblestone" },
+        "west": { "texture": "#cobblestone" }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [30, 225, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.42, 0.42, 0.42]
+    },
+    "ground": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 2, 0],
+      "scale": [0.2, 0.2, 0.2]
+    },
+    "fixed": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.35, 0.35, 0.35]
+    },
+    "thirdperson_righthand": {
+      "rotation": [0, 180, 0],
+      "translation": [0, 4, 6],
+      "scale": [0.42, 0.42, 0.42]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 4, 6],
+      "scale": [0.42, 0.42, 0.42]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 180, 0],
+      "translation": [0, 2, 8],
+      "scale": [0.35, 0.35, 0.35]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 2, 8],
+      "scale": [0.35, 0.35, 0.35]
+    }
+  }
+}

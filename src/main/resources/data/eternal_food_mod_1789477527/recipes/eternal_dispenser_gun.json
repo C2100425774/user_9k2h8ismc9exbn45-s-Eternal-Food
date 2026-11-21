@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "DID",
+    "RXR",
+    "GBG"
+  ],
+  "key": {
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "I": {
+      "item": "minecraft:iron_block"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "X": {
+      "item": "minecraft:dispenser"
+    },
+    "G": {
+      "item": "minecraft:gunpowder"
+    },
+    "B": {
+      "tag": "eternal_food_mod_1789477527:stone_buttons"
+    }
+  },
+  "result": {
+    "item": "eternal_food_mod_1789477527:eternal_dispenser_gun"
+  }
+}

@@ -32,6 +32,15 @@ public class ModEntities {
                     .updateInterval(10)
                     .build("thrown_eternal_potion"));
 
+    /** 发射器枪发射「非投掷物物品 / 刷怪蛋」时用的通用弹射物。 */
+    public static final RegistryObject<EntityType<GunProjectile>> GUN_PROJECTILE =
+            ENTITY_TYPES.register("gun_projectile", () -> EntityType.Builder
+                    .<GunProjectile>of(GunProjectile::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(4)
+                    .updateInterval(10)
+                    .build("gun_projectile"));
+
     public static void register(IEventBus modEventBus) {
         ENTITY_TYPES.register(modEventBus);
     }

@@ -299,6 +299,12 @@ public class ModItems {
     public static final RegistryObject<Item> ETERNAL_SPAWN_EGG = ITEMS.register("eternal_spawn_egg",
             () -> new EternalSpawnEggItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
 
+    // 发射器枪：便携式手持发射器。右键朝准星发射弹仓里的弹药，长按循环发射；
+    // Shift + 右键打开 3×3 弹仓 + 发射频率滑条界面。无限耐久、可附魔
+    // 无限 / 力量 / 火矢 / 多重射击 / 穿透 / 激流（见 EternalDispenserGunItem）。
+    public static final RegistryObject<Item> ETERNAL_DISPENSER_GUN = ITEMS.register("eternal_dispenser_gun",
+            () -> new EternalDispenserGunItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
+
     private static RegistryObject<Item> projectile(String name, EternalProjectileItem.Kind kind) {
         return ITEMS.register(name,
                 () -> new EternalProjectileItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE), kind));

@@ -15,10 +15,12 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
@@ -169,6 +171,25 @@ public class ModRecipeProvider extends RecipeProvider {
                 .requires(ModItems.ETERNAL_STAR_POWER.get())
                 .unlockedBy("has_eternal_star_power", has(ModItems.ETERNAL_STAR_POWER.get()))
                 .save(writer, new ResourceLocation(EternalFoodMod.MOD_ID, "eternal_star_time_from_power"));
+
+        // 发射器枪：3×3 有序合成
+        //   钻石   铁块   钻石
+        //   红石   发射器 红石
+        //   火药   石按钮 火药
+        TagKey<Item> stoneButtons = ItemTags.create(
+                new ResourceLocation(EternalFoodMod.MOD_ID, "stone_buttons"));
+        ShapedRecipeBuilder.shaped(RecipeCategory.COMBAT, ModItems.ETERNAL_DISPENSER_GUN.get())
+                .pattern("DID")
+                .pattern("RXR")
+                .pattern("GBG")
+                .define('D', Items.DIAMOND)
+                .define('I', Items.IRON_BLOCK)
+                .define('R', Items.REDSTONE)
+                .define('X', Items.DISPENSER)
+                .define('G', Items.GUNPOWDER)
+                .define('B', stoneButtons)
+                .unlockedBy("has_dispenser", has(Items.DISPENSER))
+                .save(writer);
 
         // 永恒满置域：4 组石头（256 个）+ 4 组深板岩（256 个）+ 1 下界之星 无序合成。
         // 使用自定义序列化器：匹配时额外要求石头 / 深板岩各 256 个（4 个满堆），取出成品时整堆消耗。
