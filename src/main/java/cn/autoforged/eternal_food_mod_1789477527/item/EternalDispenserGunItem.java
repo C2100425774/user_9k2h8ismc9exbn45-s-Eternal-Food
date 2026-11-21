@@ -372,7 +372,7 @@ public class EternalDispenserGunItem extends Item {
             directions.add(look);
         }
 
-        boolean spawnEgg = single.getItem() instanceof SpawnEggItem;
+        boolean spawnEgg = !infinity && single.getItem() instanceof SpawnEggItem;
         // 开了「无限」时，末影珍珠只能当一般物品发射，避免连发传送暴毙
         boolean enderPearl = single.is(Items.ENDER_PEARL)
                 || single.is(ModItems.ETERNAL_ENDER_PEARL.get());

@@ -3,7 +3,7 @@ package cn.autoforged.eternal_food_mod_1789477527.event;
 import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -18,23 +18,23 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * 发射器枪发射的原版 / 模组弹射物需要的外部记录。
+ * 发射器枪发射的原版 / 模组弹射物的外部记录。
  *
- * <p>力量附魔：
  * <ul>
- *   <li>5 级：关闭重力并把速度每 tick 固定为出膛速度 → 绝对直线、不会上下抖；</li>
- *   <li>1~4 级：每 tick 补回「重力 × power/5」（减重）+ 补回水平阻力的一部分（减阻）。</li>
+ *   <li>力量：1~4 级按比例补回重力和水平阻力；5 级只关重力（不再每 tick 改速度，
+ *       避免命中无敌目标被弹开后又被推回去）；被弹开（速度反向）时直接改成垂直落地；</li>
+ *   <li>无限：箭类落地/卡住很快消失，区块卸载直接消失；</li>
+ *   <li>防水：水里无视阻力。</li>
  * </ul>
- * 另外还负责：无限附魔箭落地 0.5 秒消失、激流水里无视阻力。
  */
 @Mod.EventBusSubscriber(modid = EternalFoodMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class GunProjectileTracker {
 
-    /** 无限附魔：箭停住后的存活时间（0.5 秒）。 */
+    /** 无限附魔：箭类停住后的存活时间（0.25 秒）。 */
     public static final int INFINITE_STUCK_TICKS = 5;
-    /** 无限附魔弹射物的安全寿命上限（防止卡在奇怪位置永远不消失）。 */
+    /** 无限附魔弹射物的安全寿命上限（2.5 秒）。 */
     public static final int INFINITE_MAX_TICKS = 50;
-    /** 力量 V 弹射物的安全寿命上限（无重力后可能一直飞，避免实体堆积）。 */
+    /** 力量弹射物的安全寿命上限（20 秒）。 */
     public static final int POWERED_MAX_TICKS = 400;
 
     private static final Set<Entity> INFINITE = Collections.synchronizedSet(
@@ -46,79 +46,27 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Vec3> LAUNCH = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAST_POS = Collections.synchronizedMap(new WeakHashMap<>());
-    private static final org.slf4j.Logger LOGGER =
-            org.slf4j.LoggerFactory.getLogger("eternal_food_gun");
-    private static final java.util.concurrent.atomic.AtomicInteger DEBUG_BUDGET =
-            new java.util.concurrent.atomic.AtomicInteger(40);
-
-    private static void debug(String message) {
-        if (DEBUG_BUDGET.getAndDecrement() > 0) {
-            LOGGER.info("[eternal_food gun] {}", message);
-        }
-    }
 
     private GunProjectileTracker() {
     }
 
     public static void markInfinite(Entity entity) {
         INFINITE.add(entity);
-        // 持久化标记：区块卸载 / 重新加载后扫描仍能认出这支箭
         entity.getPersistentData().putBoolean("EternalGunInfinite", true);
-    }
-
-    /** 每 5 tick 扫描一次所有已加载实体，兜底清理带持久标记的无限弹射物。 */
-    @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-        if (event.getServer().getTickCount() % 2 != 0) {
-            return;
-        }
-        for (ServerLevel level : event.getServer().getAllLevels()) {
-            // 不能在遍历 getAllEntities() 时 discard（会破坏底层 Int2ObjectLinkedOpenHashMap）
-            java.util.List<Entity> toDiscard = new java.util.ArrayList<>();
-            for (Entity entity : level.getAllEntities()) {
-                // getAllEntities() 的底层数组可能包含 null（实体被移除后留下的空位）
-                if (entity == null || !entity.isAlive()
-                        || !entity.getPersistentData().getBoolean("EternalGunInfinite")) {
-                    continue;
-                }
-                boolean stuck = entity.tickCount >= INFINITE_MAX_TICKS || isStuck(entity, level);
-                if (!stuck) {
-                    entity.getPersistentData().putInt("EternalGunStuck", 0);
-                    continue;
-                }
-                int count = entity.getPersistentData().getInt("EternalGunStuck") + 1;
-                if (count >= 2) {
-                    toDiscard.add(entity);
-                } else {
-                    entity.getPersistentData().putInt("EternalGunStuck", count);
-                }
-            }
-            for (Entity entity : toDiscard) {
-                debug("scan discard infinite " + entity.getType() + " tick=" + entity.tickCount
-                        + " at " + entity.blockPosition());
-                entity.discard();
-            }
-        }
-    }
-
-    private static boolean isStuck(Entity entity, ServerLevel level) {
-        return entity.onGround()
-                || level.getBlockState(entity.blockPosition()).isSolid()
-                || entity.getDeltaMovement().lengthSqr() < 1.0E-4;
     }
 
     public static void markRiptide(Entity entity) {
         RIPTIDE.add(entity);
     }
 
-    /** 力量附魔：记录等级与出膛速度。 */
     public static void markPowered(Entity entity, int level) {
         int clamped = Math.max(0, Math.min(5, level));
         if (clamped > 0) {
             POWERED.put(entity, clamped);
+            Vec3 velocity = entity.getDeltaMovement();
+            if (velocity.lengthSqr() > 1.0E-6) {
+                LAUNCH.put(entity, velocity.normalize());
+            }
         }
     }
 
@@ -141,15 +89,13 @@ public final class GunProjectileTracker {
             return;
         }
         if (event.phase == TickEvent.Phase.START) {
+            // 力量 V：只关重力；1~4 级记录 tick 前速度
             for (Entity entity : new ArrayList<>(POWERED.keySet())) {
                 if (!entity.isAlive() || entity.level() != level) {
                     continue;
                 }
                 int power = POWERED.get(entity);
                 if (power >= 5) {
-                    // 5 级：只关重力，不再每 tick 强行改速度。
-                    // 之前每 tick 把速度设回出膛速度，箭打中无敌目标被弹回后又被推回去，
-                    // 表现成「低速原路返回」；现在交回原版运动，命中弹开/停下都正常。
                     entity.setNoGravity(true);
                     if (entity.tickCount >= POWERED_MAX_TICKS) {
                         entity.discard();
@@ -167,7 +113,6 @@ public final class GunProjectileTracker {
             return;
         }
         // END -----------------------------------------------------------------
-        // 无限附魔：落地 / 卡住 0.5 秒消失；区块卸载直接消失；120 tick 安全上限
         for (Entity entity : new ArrayList<>(INFINITE)) {
             if (!entity.isAlive() || entity.level() != level) {
                 INFINITE.remove(entity);
@@ -188,9 +133,6 @@ public final class GunProjectileTracker {
             int stillTicks = stuckNow ? old + 1 : Math.max(0, old - 1);
             if (unloaded || stillTicks >= INFINITE_STUCK_TICKS
                     || entity.tickCount >= INFINITE_MAX_TICKS) {
-                debug("discard infinite " + entity.getType() + " tick=" + entity.tickCount
-                        + " unloaded=" + unloaded + " still=" + stillTicks
-                        + " onGround=" + onGround + " solid=" + inSolid);
                 entity.discard();
                 INFINITE.remove(entity);
                 STUCK_TICKS.remove(entity);
@@ -199,32 +141,42 @@ public final class GunProjectileTracker {
                 STUCK_TICKS.put(entity, stillTicks);
             }
         }
-        // 力量 1~4：补回一部分重力 + 一部分水平阻力（不做整体还原，避免上下抖）
+        // 力量弹射物：被弹开就垂直落地；1~4 级补回重力和水平阻力
         for (Entity entity : new ArrayList<>(POWERED.keySet())) {
-            Vec3 before = PRE_TICK.remove(entity);
             if (!entity.isAlive() || entity.level() != level) {
+                PRE_TICK.remove(entity);
                 POWERED.remove(entity);
                 LAUNCH.remove(entity);
-                continue;
-            }
-            if (before == null) {
                 continue;
             }
             if (entity.tickCount >= POWERED_MAX_TICKS) {
                 entity.discard();
+                PRE_TICK.remove(entity);
                 POWERED.remove(entity);
                 LAUNCH.remove(entity);
                 continue;
             }
+            Vec3 launch = LAUNCH.get(entity);
+            Vec3 now = entity.getDeltaMovement();
+            if (launch != null && now.dot(launch) < -0.01) {
+                // 命中无敌目标被弹开：直接垂直落地，避免原路飞回
+                entity.setDeltaMovement(0.0, -1.0, 0.0);
+                entity.setNoGravity(false);
+                PRE_TICK.remove(entity);
+                continue;
+            }
+            Vec3 before = PRE_TICK.remove(entity);
+            if (before == null) {
+                continue;
+            }
             int power = POWERED.get(entity);
             double f = power / 5.0;
-            Vec3 now = entity.getDeltaMovement();
             double gravity = gravityOf(entity) * f;
             double nx = now.x + (before.x - now.x) * f;
             double nz = now.z + (before.z - now.z) * f;
             entity.setDeltaMovement(nx, now.y + gravity, nz);
         }
-        // 激流：水中无视阻力（最后应用）
+        // 防水：水中无视阻力
         for (Entity entity : new ArrayList<>(RIPTIDE)) {
             Vec3 before = PRE_TICK.remove(entity);
             if (!entity.isAlive() || entity.level() != level) {
@@ -234,5 +186,45 @@ public final class GunProjectileTracker {
                 entity.setDeltaMovement(before);
             }
         }
+    }
+
+    /** 每 2 tick 扫描一次所有已加载实体，兜底清理带持久标记的无限弹射物。 */
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        if (event.getServer().getTickCount() % 2 != 0) {
+            return;
+        }
+        for (ServerLevel level : event.getServer().getAllLevels()) {
+            List<Entity> toDiscard = new ArrayList<>();
+            for (Entity entity : level.getAllEntities()) {
+                if (entity == null || !entity.isAlive()
+                        || !entity.getPersistentData().getBoolean("EternalGunInfinite")) {
+                    continue;
+                }
+                boolean stuck = entity.tickCount >= INFINITE_MAX_TICKS || isStuck(entity, level);
+                if (!stuck) {
+                    entity.getPersistentData().putInt("EternalGunStuck", 0);
+                    continue;
+                }
+                int count = entity.getPersistentData().getInt("EternalGunStuck") + 1;
+                if (count >= 2) {
+                    toDiscard.add(entity);
+                } else {
+                    entity.getPersistentData().putInt("EternalGunStuck", count);
+                }
+            }
+            for (Entity entity : toDiscard) {
+                entity.discard();
+            }
+        }
+    }
+
+    private static boolean isStuck(Entity entity, ServerLevel level) {
+        return entity.onGround()
+                || level.getBlockState(entity.blockPosition()).isSolid()
+                || entity.getDeltaMovement().lengthSqr() < 1.0E-4;
     }
 }
