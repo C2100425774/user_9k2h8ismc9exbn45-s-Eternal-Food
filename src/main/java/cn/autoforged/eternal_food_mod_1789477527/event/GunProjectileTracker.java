@@ -33,7 +33,7 @@ public final class GunProjectileTracker {
     /** 无限附魔：箭停住后的存活时间（0.5 秒）。 */
     public static final int INFINITE_STUCK_TICKS = 10;
     /** 无限附魔弹射物的安全寿命上限（防止卡在奇怪位置永远不消失）。 */
-    public static final int INFINITE_MAX_TICKS = 200;
+    public static final int INFINITE_MAX_TICKS = 120;
     /** 力量 V 弹射物的安全寿命上限（无重力后可能一直飞，避免实体堆积）。 */
     public static final int POWERED_MAX_TICKS = 400;
 
@@ -46,12 +46,24 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Vec3> LAUNCH = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAST_POS = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final org.slf4j.Logger LOGGER =
+            org.slf4j.LoggerFactory.getLogger("eternal_food_gun");
+    private static final java.util.concurrent.atomic.AtomicInteger DEBUG_BUDGET =
+            new java.util.concurrent.atomic.AtomicInteger(40);
+
+    private static void debug(String message) {
+        if (DEBUG_BUDGET.getAndDecrement() > 0) {
+            LOGGER.info("[eternal_food gun] {}", message);
+        }
+    }
 
     private GunProjectileTracker() {
     }
 
     public static void markInfinite(Entity entity) {
         INFINITE.add(entity);
+        debug("mark infinite " + entity.getType().toString() + " at " + entity.blockPosition()
+                + " tick=" + entity.tickCount);
     }
 
     public static void markRiptide(Entity entity) {
@@ -111,7 +123,7 @@ public final class GunProjectileTracker {
             return;
         }
         // END -----------------------------------------------------------------
-        // 无限附魔：落地 / 卡住 0.5 秒消失；区块卸载直接消失；200 tick 安全上限
+        // 无限附魔：落地 / 卡住 0.5 秒消失；区块卸载直接消失；120 tick 安全上限
         for (Entity entity : new ArrayList<>(INFINITE)) {
             if (!entity.isAlive() || entity.level() != level) {
                 INFINITE.remove(entity);
@@ -122,10 +134,19 @@ public final class GunProjectileTracker {
             boolean unloaded = !level.hasChunkAt(entity.blockPosition());
             Vec3 pos = entity.position();
             Vec3 last = LAST_POS.put(entity, pos);
-            boolean still = last != null && last.distanceToSqr(pos) < 1.0E-4;
-            int stillTicks = still ? STUCK_TICKS.getOrDefault(entity, 0) + 1 : 0;
+            boolean noMove = last != null && last.distanceToSqr(pos) < 0.05;
+            boolean onGround = entity.onGround();
+            boolean inSolid = level.getBlockState(entity.blockPosition()).isSolid();
+            boolean tinySpeed = entity instanceof AbstractArrow arrow
+                    && arrow.getDeltaMovement().lengthSqr() < 1.0E-4;
+            boolean stuckNow = noMove || onGround || inSolid || tinySpeed;
+            int old = STUCK_TICKS.getOrDefault(entity, 0);
+            int stillTicks = stuckNow ? old + 1 : Math.max(0, old - 1);
             if (unloaded || stillTicks >= INFINITE_STUCK_TICKS
                     || entity.tickCount >= INFINITE_MAX_TICKS) {
+                debug("discard infinite " + entity.getType() + " tick=" + entity.tickCount
+                        + " unloaded=" + unloaded + " still=" + stillTicks
+                        + " onGround=" + onGround + " solid=" + inSolid);
                 entity.discard();
                 INFINITE.remove(entity);
                 STUCK_TICKS.remove(entity);
