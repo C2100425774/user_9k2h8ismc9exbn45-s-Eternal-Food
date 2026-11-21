@@ -96,12 +96,10 @@ public final class GunProjectileTracker {
                     continue;
                 }
                 PRE_TICK.put(entity, entity.getDeltaMovement());
+                // 力量 5 不做任何重力补偿：28.75 格/tick 的高速下重力下坠可以忽略不计，
+                // 提前补重力会让位置每 tick 被额外抬高，表现为一直往上飘。
                 if (POWERED.get(entity) >= 5) {
-                    // 力量 5：不关重力，只把这一 tick 的 90% 重力提前补回去，
-                    // 等效重力约为原来的 10%（极小重力），不会像关重力那样出现异常弹回。
                     entity.setNoGravity(false);
-                    entity.setDeltaMovement(entity.getDeltaMovement()
-                            .add(0.0, gravityOf(entity) * 0.9, 0.0));
                 }
                 if (entity.tickCount >= POWERED_MAX_TICKS) {
                     entity.discard();
@@ -188,7 +186,7 @@ public final class GunProjectileTracker {
             POWER_STILL.remove(entity);
             int power = POWERED.get(entity);
             if (power >= 5) {
-                // 力量 5 已在 START 里预先补了 90% 重力，END 不再改速度
+                // 力量 5 完全不动速度
                 continue;
             }
             double f = power / 5.0;
