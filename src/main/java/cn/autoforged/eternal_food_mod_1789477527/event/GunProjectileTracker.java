@@ -180,6 +180,13 @@ public final class GunProjectileTracker {
             }
             POWER_STILL.remove(entity);
             int power = POWERED.get(entity);
+            if (power >= 5) {
+                // 力量 5：模仿 TaCZ 狙击弹的「极低重力 + 极低阻力」：
+                // 只补回这一 tick 的重力，不还原水平速度，阻力对 x/y/z 同步衰减，
+                // 所以轨迹是一条直线（速度轻微衰减，但不会下坠/上飘）。
+                entity.setDeltaMovement(now.x, now.y + gravityOf(entity), now.z);
+                continue;
+            }
             double f = power / 5.0;
             double gravity = gravityOf(entity) * f;
             double nx = now.x + (before.x - now.x) * f;
