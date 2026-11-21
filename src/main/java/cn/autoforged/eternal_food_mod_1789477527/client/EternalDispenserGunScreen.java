@@ -27,20 +27,20 @@ public class EternalDispenserGunScreen extends AbstractContainerScreen<EternalDi
     public EternalDispenserGunScreen(EternalDispenserGunMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         this.imageWidth = 176;
-        this.imageHeight = 198;
+        this.imageHeight = 194;
         this.titleLabelY = 6;
-        this.inventoryLabelY = 104;
+        this.inventoryLabelY = 100;
     }
 
     @Override
     protected void init() {
         super.init();
-        this.slider = new DelaySlider(this.leftPos + 8, this.topPos + 84, 112, 16);
+        this.slider = new DelaySlider(this.leftPos + 8, this.topPos + 74, 112, 20);
         this.addRenderableWidget(this.slider);
         this.addRenderableWidget(Button.builder(
                         Component.translatable("gui.eternal_food_mod_1789477527.dispenser_gun.default"),
                         button -> this.slider.setTicks(EternalDispenserGunItem.DEFAULT_DELAY_TICKS))
-                .bounds(this.leftPos + 126, this.topPos + 84, 42, 16)
+                .bounds(this.leftPos + 126, this.topPos + 74, 42, 20)
                 .build());
     }
 
@@ -107,17 +107,15 @@ public class EternalDispenserGunScreen extends AbstractContainerScreen<EternalDi
                     "gui.eternal_food_mod_1789477527.dispenser_gun.delay",
                     String.format(java.util.Locale.ROOT, "%.1f", ticks / 20.0F)));
         }
-
         @Override
         protected void applyValue() {
-            // 拖动过程中只更新显示；数值变化才发包（避免每像素一个包导致卡顿感）
-            this.updateMessage();
-            this.push();
+            // 拖动过程中完全不动网络和文字，保证跟手；松手时再统一更新
         }
 
         @Override
         public void onRelease(double mouseX, double mouseY) {
             super.onRelease(mouseX, mouseY);
+            this.updateMessage();
             this.push();
         }
     }

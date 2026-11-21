@@ -51,6 +51,8 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkHooks;
 
 /**
@@ -71,8 +73,8 @@ public class EternalDispenserGunItem extends Item {
     public static final int MAX_DELAY_TICKS = 30;
     /** 默认：1 秒。 */
     public static final int DEFAULT_DELAY_TICKS = 20;
-    /** 无限附魔发射的弹射物存活 tick（大幅缩短，避免卡顿）。 */
-    public static final int INFINITE_LIFETIME_TICKS = 60;
+    /** 无限附魔的箭落地后 0.5 秒消失（具体见 {@code GunProjectileTracker}）。 */
+    public static final int INFINITE_LIFETIME_TICKS = GunProjectileTracker.INFINITE_STUCK_TICKS;
 
     public static final String TAG_ITEMS = "Items";
     public static final String TAG_DELAY = "FireDelay";
@@ -382,12 +384,10 @@ public class EternalDispenserGunItem extends Item {
     private void spawnProjectileAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
             Vec3 direction, int powerLevel, boolean flame, int piercing, boolean infinity,
             boolean riptide, float uncertainty, boolean silk) {
-        boolean creative = player.isCreative();
         if (ammo.getItem() instanceof SpawnEggItem) {
             GunProjectile projectile = new GunProjectile(level, origin.x, origin.y, origin.z, ammo);
             projectile.setMode(GunProjectile.MODE_SPAWN_EGG);
-            // 刷怪蛋弹射物命中即生成生物，不存在拾取问题，所以无限附魔照常缩短寿命
-            projectile.setInfinite(infinity);
+            projectile.setInfinite(false);
             projectile.setRiptide(riptide);
             projectile.setOwner(player);
             projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, uncertainty);
@@ -413,14 +413,11 @@ public class EternalDispenserGunItem extends Item {
             arrow.setPierceLevel((byte) Math.min(piercing, 4));
         }
         if (infinity) {
+            // 只有无限附魔的弹射物不可拾取；箭类落地停住 0.5 秒后消失
             if (projectile instanceof AbstractArrow arrow) {
-                // 创造模式仍然可以捡回来；生存模式不可拾取
-                arrow.pickup = creative ? AbstractArrow.Pickup.ALLOWED
-                        : AbstractArrow.Pickup.CREATIVE_ONLY;
+                arrow.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
             }
-            if (!creative) {
-                GunProjectileTracker.markInfinite(projectile, INFINITE_LIFETIME_TICKS);
-            }
+            GunProjectileTracker.markInfinite(projectile);
         }
         if (riptide) {
             GunProjectileTracker.markRiptide(projectile);
@@ -552,7 +549,53 @@ public class EternalDispenserGunItem extends Item {
         tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.delay",
                 String.format(java.util.Locale.ROOT, "%.1f", getFireDelay(stack) / 20.0F))
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.enchants")
-                .withStyle(ChatFormatting.DARK_GRAY));
+        Boolean shift = DistExecutor.unsafeCallWhenOn(Dist.CLIENT,
+                () -> () -> net.minecraft.client.gui.screens.Screen.hasShiftDown());
+        if (Boolean.TRUE.equals(shift)) {
+            List<Enchantment> list = List.of(Enchantments.INFINITY_ARROWS,
+                    Enchantments.POWER_ARROWS, Enchantments.FLAMING_ARROWS,
+                    Enchantments.MULTISHOT, Enchantments.PIERCING,
+                    Enchantments.RIPTIDE, Enchantments.SILK_TOUCH);
+            boolean any = false;
+            for (Enchantment enchantment : list) {
+                if (ench(stack, enchantment) <= 0) {
+                    continue;
+                }
+                any = true;
+                tooltip.add(Component.translatable(enchantEffectKey(enchantment))
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            if (!any) {
+                tooltip.add(Component.translatable(
+                        "tooltip.eternal_food_mod_1789477527.dispenser_gun.no_enchant")
+                        .withStyle(ChatFormatting.DARK_GRAY));
+            }
+        } else {
+            tooltip.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.dispenser_gun.shift")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        }
+    }
+
+    private static String enchantEffectKey(Enchantment enchantment) {
+        if (enchantment == Enchantments.INFINITY_ARROWS) {
+            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.infinity";
+        }
+        if (enchantment == Enchantments.POWER_ARROWS) {
+            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.power";
+        }
+        if (enchantment == Enchantments.FLAMING_ARROWS) {
+            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.flame";
+        }
+        if (enchantment == Enchantments.MULTISHOT) {
+            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.multishot";
+        }
+        if (enchantment == Enchantments.PIERCING) {
+            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.piercing";
+        }
+        if (enchantment == Enchantments.RIPTIDE) {
+            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.riptide";
+        }
+        return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.silk_touch";
     }
 }

@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -16,15 +17,21 @@ import net.minecraftforge.fml.common.Mod;
 /**
  * 发射器枪发射的原版 / 模组弹射物需要的外部记录：
  * <ul>
- *   <li>无限附魔：60 tick 后强制消失（避免连续发射时实体堆积卡顿）；</li>
+ *   <li>无限附魔：箭类在地上停住 0.5 秒（10 tick）后消失，避免连续发射时实体堆积卡顿；
+ *       飞行中的弹射物与原版一样正常存在；</li>
  *   <li>激流附魔：在水里时把速度恢复成 tick 前的值，等于无视水阻力（只有 1 级效果）。</li>
  * </ul>
- * 物品弹射物（{@code GunProjectile}）自己处理这两件事，不需要登记。
+ * 未附魔无限时完全不跟踪，弹射物寿命与原版一致（可拾取 / 原版消失时间）。
  */
 @Mod.EventBusSubscriber(modid = EternalFoodMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class GunProjectileTracker {
 
-    private static final Map<Entity, Long> EXPIRES = Collections.synchronizedMap(new WeakHashMap<>());
+    /** 无限附魔：箭停住后的存活时间（0.5 秒）。 */
+    public static final int INFINITE_STUCK_TICKS = 10;
+
+    private static final Set<Entity> INFINITE = Collections.synchronizedSet(
+            Collections.newSetFromMap(new WeakHashMap<>()));
+    private static final Map<Entity, Integer> STUCK_TICKS = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Set<Entity> RIPTIDE = Collections.synchronizedSet(
             Collections.newSetFromMap(new WeakHashMap<>()));
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
@@ -32,11 +39,9 @@ public final class GunProjectileTracker {
     private GunProjectileTracker() {
     }
 
-    /** 无限附魔发射的弹射物：存活 {@code ticks} tick 后丢弃。 */
-    public static void markInfinite(Entity entity, int ticks) {
-        if (entity.level() instanceof ServerLevel) {
-            EXPIRES.put(entity, entity.level().getGameTime() + ticks);
-        }
+    /** 无限附魔发射的弹射物：箭类停住 0.5 秒后丢弃。 */
+    public static void markInfinite(Entity entity) {
+        INFINITE.add(entity);
     }
 
     /** 激流附魔发射的弹射物：水里无视阻力。 */
@@ -49,7 +54,6 @@ public final class GunProjectileTracker {
         if (!(event.level instanceof ServerLevel level)) {
             return;
         }
-        long now = level.getGameTime();
         if (event.phase == TickEvent.Phase.START) {
             for (Entity entity : RIPTIDE) {
                 if (entity.isAlive() && entity.level() == level && entity.isInWater()) {
@@ -58,18 +62,24 @@ public final class GunProjectileTracker {
             }
             return;
         }
-        // END：先处理到期丢弃
-        Iterator<Map.Entry<Entity, Long>> it = EXPIRES.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<Entity, Long> entry = it.next();
-            Entity entity = entry.getKey();
+        // END
+        Iterator<Entity> infiniteIt = INFINITE.iterator();
+        while (infiniteIt.hasNext()) {
+            Entity entity = infiniteIt.next();
             if (!entity.isAlive() || entity.level() != level) {
-                it.remove();
+                infiniteIt.remove();
+                STUCK_TICKS.remove(entity);
                 continue;
             }
-            if (now >= entry.getValue()) {
-                entity.discard();
-                it.remove();
+            if (entity instanceof AbstractArrow arrow && arrow.getDeltaMovement().lengthSqr() < 1.0E-4) {
+                int ticks = STUCK_TICKS.getOrDefault(entity, 0) + 1;
+                if (ticks >= INFINITE_STUCK_TICKS) {
+                    arrow.discard();
+                    infiniteIt.remove();
+                    STUCK_TICKS.remove(entity);
+                } else {
+                    STUCK_TICKS.put(entity, ticks);
+                }
             }
         }
         // 激流：把水中那一 tick 的速度还原成 tick 前

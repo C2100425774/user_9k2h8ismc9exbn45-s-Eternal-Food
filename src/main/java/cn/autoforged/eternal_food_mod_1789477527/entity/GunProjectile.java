@@ -115,9 +115,6 @@ public class GunProjectile extends ThrowableItemProjectile {
             Vec3 fixed = nowH.add(beforeH.subtract(nowH).scale(factor));
             this.setDeltaMovement(fixed.x, now.y, fixed.z);
         }
-        if (this.infinite && this.tickCount > 60) {
-            this.discard();
-        }
     }
 
     @Override
