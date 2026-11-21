@@ -51,6 +51,18 @@ public final class ModNetwork {
                 GunSetDelayPacket::encode,
                 GunSetDelayPacket::decode,
                 GunSetDelayPacket::handle);
+        CHANNEL.registerMessage(id++, GunFirePacket.class,
+                GunFirePacket::encode,
+                GunFirePacket::decode,
+                GunFirePacket::handle);
+        CHANNEL.registerMessage(id++, OpenGunConfigPacket.class,
+                OpenGunConfigPacket::encode,
+                OpenGunConfigPacket::decode,
+                OpenGunConfigPacket::handle);
+        CHANNEL.registerMessage(id++, GunConfigPacket.class,
+                GunConfigPacket::encode,
+                GunConfigPacket::decode,
+                GunConfigPacket::handle);
     }
 
     /** 让指定玩家客户端用 {@code stack} 播放一次不死图腾激活动画（仅服务端调用）。 */

@@ -68,11 +68,11 @@ public class EternalDispenserGunScreen extends AbstractContainerScreen<EternalDi
         this.renderTooltip(graphics, mouseX, mouseY);
     }
 
-    /** 附魔无限时，把第 1 格标成金色，提示这一格会无限发射。 */
+    /** 开了「无限」时，把第 1 格标成金色，提示这一格会无限发射。 */
     private void renderInfiniteSlotHint(GuiGraphics graphics) {
         ItemStack gun = this.menu.getGun();
         if (gun.isEmpty()
-                || EnchantmentHelper.getItemEnchantmentLevel(Enchantments.INFINITY_ARROWS, gun) <= 0) {
+                || !EternalDispenserGunItem.getToggle(gun, EternalDispenserGunItem.CFG_INFINITY)) {
             return;
         }
         int x = this.leftPos + SLOT0_X - 2;

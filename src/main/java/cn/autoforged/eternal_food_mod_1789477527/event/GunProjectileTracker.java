@@ -62,8 +62,48 @@ public final class GunProjectileTracker {
 
     public static void markInfinite(Entity entity) {
         INFINITE.add(entity);
+        // 持久化标记：区块卸载 / 重新加载后扫描仍能认出这支箭
+        entity.getPersistentData().putBoolean("EternalGunInfinite", true);
         debug("mark infinite " + entity.getType().toString() + " at " + entity.blockPosition()
                 + " tick=" + entity.tickCount);
+    }
+
+    /** 每 5 tick 扫描一次所有已加载实体，兜底清理带持久标记的无限弹射物。 */
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        if (event.getServer().getTickCount() % 5 != 0) {
+            return;
+        }
+        for (ServerLevel level : event.getServer().getAllLevels()) {
+            for (Entity entity : level.getAllEntities()) {
+                if (!entity.isAlive()
+                        || !entity.getPersistentData().getBoolean("EternalGunInfinite")) {
+                    continue;
+                }
+                boolean stuck = entity.tickCount >= INFINITE_MAX_TICKS || isStuck(entity, level);
+                if (!stuck) {
+                    entity.getPersistentData().putInt("EternalGunStuck", 0);
+                    continue;
+                }
+                int count = entity.getPersistentData().getInt("EternalGunStuck") + 1;
+                if (count >= 2) {
+                    debug("scan discard infinite " + entity.getType() + " tick=" + entity.tickCount
+                            + " at " + entity.blockPosition());
+                    entity.discard();
+                } else {
+                    entity.getPersistentData().putInt("EternalGunStuck", count);
+                }
+            }
+        }
+    }
+
+    private static boolean isStuck(Entity entity, ServerLevel level) {
+        return entity.onGround()
+                || level.getBlockState(entity.blockPosition()).isSolid()
+                || entity.getDeltaMovement().lengthSqr() < 1.0E-4;
     }
 
     public static void markRiptide(Entity entity) {

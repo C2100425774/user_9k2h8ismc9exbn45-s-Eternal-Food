@@ -6,6 +6,8 @@ import cn.autoforged.eternal_food_mod_1789477527.entity.ThrownEternalMilk;
 import cn.autoforged.eternal_food_mod_1789477527.entity.ThrownEternalPotion;
 import cn.autoforged.eternal_food_mod_1789477527.event.GunProjectileTracker;
 import cn.autoforged.eternal_food_mod_1789477527.menu.EternalDispenserGunMenu;
+import cn.autoforged.eternal_food_mod_1789477527.network.ModNetwork;
+import cn.autoforged.eternal_food_mod_1789477527.network.OpenGunConfigPacket;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
@@ -52,26 +54,26 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PacketDistributor;
 
 /**
- * 发射器枪：便携式手持发射器。
- *
+ * 鍙戝皠鍣ㄦ灙锛氫究鎼哄紡鎵嬫寔鍙戝皠鍣ㄣ€? *
  * <ul>
- *   <li>右键：朝准星方向发射弹仓里的弹药（力道 / 散布与发射器一致）；</li>
- *   <li>长按右键：按发射频率循环发射（2 ~ 30 tick，默认 20 tick = 1 秒）；</li>
- *   <li>Shift + 右键：打开界面（上面 3×3 弹仓，下面发射频率滑条）；</li>
- *   <li>附魔：无限 / 力量 / 火矢 / 多重射击 / 穿透 / 激流。</li>
+ *   <li>鍙抽敭锛氭湞鍑嗘槦鏂瑰悜鍙戝皠寮逛粨閲岀殑寮硅嵂锛堝姏閬?/ 鏁ｅ竷涓庡彂灏勫櫒涓€鑷达級锛?/li>
+ *   <li>闀挎寜鍙抽敭锛氭寜鍙戝皠棰戠巼寰幆鍙戝皠锛? ~ 30 tick锛岄粯璁?20 tick = 1 绉掞級锛?/li>
+ *   <li>Shift + 鍙抽敭锛氭墦寮€鐣岄潰锛堜笂闈?3脳3 寮逛粨锛屼笅闈㈠彂灏勯鐜囨粦鏉★級锛?/li>
+ *   <li>闄勯瓟锛氭棤闄?/ 鍔涢噺 / 鐏煝 / 澶氶噸灏勫嚮 / 绌块€?/ 婵€娴併€?/li>
  * </ul>
  */
 public class EternalDispenserGunItem extends Item {
 
-    /** 最快：每 tick 一次 = 1 tick。 */
+    /** 鏈€蹇細姣?tick 涓€娆?= 1 tick銆?*/
     public static final int MIN_DELAY_TICKS = 1;
-    /** 最慢：1.5 秒 = 30 tick。 */
+    /** 鏈€鎱細1.5 绉?= 30 tick銆?*/
     public static final int MAX_DELAY_TICKS = 30;
-    /** 默认：1 秒。 */
+    /** 榛樿锛? 绉掋€?*/
     public static final int DEFAULT_DELAY_TICKS = 20;
-    /** 无限附魔的箭落地后 0.5 秒消失（具体见 {@code GunProjectileTracker}）。 */
+    /** 鏃犻檺闄勯瓟鐨勭钀藉湴鍚?0.5 绉掓秷澶憋紙鍏蜂綋瑙?{@code GunProjectileTracker}锛夈€?*/
     public static final int INFINITE_LIFETIME_TICKS = GunProjectileTracker.INFINITE_STUCK_TICKS;
 
     public static final String TAG_ITEMS = "Items";
@@ -84,7 +86,7 @@ public class EternalDispenserGunItem extends Item {
     }
 
     // ------------------------------------------------------------------
-    // 弹仓 / 发射频率（存在物品 NBT 里，界面关闭 / 存档都保留）
+    // 寮逛粨 / 鍙戝皠棰戠巼锛堝瓨鍦ㄧ墿鍝?NBT 閲岋紝鐣岄潰鍏抽棴 / 瀛樻。閮戒繚鐣欙級
     // ------------------------------------------------------------------
 
     public static ItemStack getAmmo(ItemStack gun, int slot) {
@@ -126,7 +128,7 @@ public class EternalDispenserGunItem extends Item {
         }
     }
 
-    /** 9 格弹仓全部导出（给 GUI 容器用）。 */
+    /** 9 鏍煎脊浠撳叏閮ㄥ鍑猴紙缁?GUI 瀹瑰櫒鐢級銆?*/
     public static List<ItemStack> readAllAmmo(ItemStack gun) {
         List<ItemStack> result = new ArrayList<>(9);
         for (int i = 0; i < 9; i++) {
@@ -153,61 +155,100 @@ public class EternalDispenserGunItem extends Item {
     }
 
     // ------------------------------------------------------------------
-    // 附魔
-    // ------------------------------------------------------------------
+    // 閰嶇疆锛堝師鏉ョ殑闄勯瓟鏀规垚鏋嚜韬殑寮€鍏筹紝瑙?Shift+鍙抽敭鐣岄潰锛?    // ------------------------------------------------------------------
+
+    public static final String CFG_INFINITY = "CfgInfinity";
+    public static final String CFG_FLAME = "CfgFlame";
+    public static final String CFG_MULTISHOT = "CfgMultishot";
+    public static final String CFG_PIERCING = "CfgPiercing";
+    public static final String CFG_WATERPROOF = "CfgWaterproof";
+    public static final String CFG_SILK = "CfgSilkTouch";
+    public static final String CFG_POWER = "CfgPower";
+    private static final String CFG_LAST_FIRE = "CfgLastFire";
+
+    /** 閰嶇疆鐣岄潰閲岀殑寮€鍏虫寜閽紙椤哄簭鍗崇晫闈㈤『搴忥級銆?*/
+    public static final List<String> TOGGLE_KEYS = List.of(
+            CFG_INFINITY, CFG_FLAME, CFG_MULTISHOT, CFG_PIERCING, CFG_WATERPROOF, CFG_SILK);
 
     @Override
     public boolean isEnchantable(ItemStack stack) {
-        return true;
+        return false;
     }
 
     @Override
     public int getEnchantmentValue() {
-        return 15;
+        return 0;
     }
 
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
-        return enchantment == Enchantments.INFINITY_ARROWS
-                || enchantment == Enchantments.POWER_ARROWS
-                || enchantment == Enchantments.FLAMING_ARROWS
-                || enchantment == Enchantments.MULTISHOT
-                || enchantment == Enchantments.PIERCING
-                || enchantment == Enchantments.RIPTIDE
-                || enchantment == Enchantments.SILK_TOUCH
-                || super.canApplyAtEnchantingTable(stack, enchantment);
+        return false;
     }
 
     @Override
     public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
-        return true;
+        return false;
     }
 
-    private static int ench(ItemStack stack, Enchantment enchantment) {
-        if (stack.isEmpty()) {
+    public static boolean getToggle(ItemStack gun, String key) {
+        return !gun.isEmpty() && gun.hasTag() && gun.getTag().getBoolean(key);
+    }
+
+    public static void setToggle(ItemStack gun, String key, boolean on) {
+        gun.getOrCreateTag().putBoolean(key, on);
+    }
+
+    public static int getPower(ItemStack gun) {
+        if (gun.isEmpty() || !gun.hasTag()) {
             return 0;
         }
-        return EnchantmentHelper.getItemEnchantmentLevel(enchantment, stack);
+        return Math.max(0, Math.min(5, gun.getTag().getInt(CFG_POWER)));
+    }
+
+    public static void setPower(ItemStack gun, int power) {
+        gun.getOrCreateTag().putInt(CFG_POWER, Math.max(0, Math.min(5, power)));
+    }
+
+    public static String optionNameKey(String key) {
+        return "gui.eternal_food_mod_1789477527.dispenser_gun.option." + shortName(key);
+    }
+
+    public static String optionDescKey(String key) {
+        return "tooltip.eternal_food_mod_1789477527.dispenser_gun.option." + shortName(key);
+    }
+
+    private static String shortName(String key) {
+        return switch (key) {
+            case CFG_INFINITY -> "infinity";
+            case CFG_FLAME -> "flame";
+            case CFG_MULTISHOT -> "multishot";
+            case CFG_PIERCING -> "piercing";
+            case CFG_WATERPROOF -> "waterproof";
+            case CFG_SILK -> "silk_touch";
+            default -> "unknown";
+        };
     }
 
     // ------------------------------------------------------------------
-    // 使用
+    // 浣跨敤
     // ------------------------------------------------------------------
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (player.isShiftKeyDown()) {
-            if (level instanceof ServerLevel server) {
+        if (!level.isClientSide) {
+            if (player.isShiftKeyDown()) {
+                // Shift+鍙抽敭锛氭墦寮€閰嶇疆鐣岄潰锛堟寜閽缃灙鐨勬晥鏋滐級
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> serverPlayer),
+                            new OpenGunConfigPacket(stack.copy()));
+                }
+            } else if (level instanceof ServerLevel server) {
+                // 鍙抽敭锛氭墦寮€寮硅嵂鐣岄潰
                 openMenu(server, player, hand, stack);
             }
-            return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
         }
-        if (level instanceof ServerLevel server) {
-            fire(server, player, stack);
-        }
-        player.startUsingItem(hand);
-        return InteractionResultHolder.consume(stack);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }
 
     @Override
@@ -217,40 +258,54 @@ public class EternalDispenserGunItem extends Item {
             return InteractionResult.PASS;
         }
         ItemStack stack = context.getItemInHand();
-        if (player.isShiftKeyDown()) {
-            if (context.getLevel() instanceof ServerLevel server) {
+        if (!context.getLevel().isClientSide) {
+            if (player.isShiftKeyDown()) {
+                if (player instanceof ServerPlayer serverPlayer) {
+                    ModNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> serverPlayer),
+                            new OpenGunConfigPacket(stack.copy()));
+                }
+            } else if (context.getLevel() instanceof ServerLevel server) {
                 openMenu(server, player, context.getHand(), stack);
             }
-            return InteractionResult.sidedSuccess(context.getLevel().isClientSide());
         }
-        if (context.getLevel() instanceof ServerLevel server) {
-            fire(server, player, stack);
-        }
-        player.startUsingItem(context.getHand());
         return InteractionResult.sidedSuccess(context.getLevel().isClientSide());
     }
 
     @Override
-    public void onUseTick(Level level, LivingEntity living, ItemStack stack, int remaining) {
-        if (level.isClientSide() || !(living instanceof Player player)
-                || !(level instanceof ServerLevel server)) {
-            return;
-        }
-        int elapsed = this.getUseDuration(stack) - remaining;
-        int delay = getFireDelay(stack);
-        if (elapsed > 0 && elapsed % delay == 0) {
-            fire(server, player, stack);
-        }
-    }
-
-    @Override
     public int getUseDuration(ItemStack stack) {
-        return 72000;
+        return 0;
     }
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.NONE;
+    }
+
+    /** 宸﹂敭锛堝鎴风鍙戞潵鐨勫彂灏勫寘锛夊湪鏈嶅姟绔墽琛岋紝甯﹀彂灏勯棿闅旈檺鍒躲€?*/
+    public static void tryFire(ServerPlayer player) {
+        ItemStack gun = player.getMainHandItem();
+        if (gun.isEmpty() || !(gun.getItem() instanceof EternalDispenserGunItem)) {
+            return;
+        }
+        long now = player.serverLevel().getGameTime();
+        long last = gun.hasTag() ? gun.getTag().getLong(CFG_LAST_FIRE) : 0L;
+        if (now - last < getFireDelay(gun)) {
+            return;
+        }
+        gun.getOrCreateTag().putLong(CFG_LAST_FIRE, now);
+        fire(player.serverLevel(), player, gun);
+    }
+
+    /** 渚涢厤缃晫闈㈡敼瀹屾暟鍊煎悗鍚屾鏈嶅姟绔?NBT銆?*/
+    public static void applyConfig(ItemStack gun, String key, int value) {
+        if (gun.isEmpty() || !(gun.getItem() instanceof EternalDispenserGunItem)) {
+            return;
+        }
+        if (CFG_POWER.equals(key)) {
+            setPower(gun, value);
+        } else {
+            setToggle(gun, key, value != 0);
+        }
     }
 
     private static void openMenu(ServerLevel level, Player player, InteractionHand hand, ItemStack stack) {
@@ -263,11 +318,11 @@ public class EternalDispenserGunItem extends Item {
     }
 
     // ------------------------------------------------------------------
-    // 发射
+    // 鍙戝皠
     // ------------------------------------------------------------------
 
-    private void fire(ServerLevel level, Player player, ItemStack gun) {
-        boolean infinity = ench(gun, Enchantments.INFINITY_ARROWS) > 0;
+    private static void fire(ServerLevel level, Player player, ItemStack gun) {
+        boolean infinity = getToggle(gun, CFG_INFINITY);
         int slot = findAmmoSlot(gun, infinity);
         if (slot < 0) {
             return;
@@ -282,13 +337,13 @@ public class EternalDispenserGunItem extends Item {
         Vec3 look = player.getLookAngle();
         Vec3 origin = player.getEyePosition().add(look.scale(0.35));
 
-        int powerLevel = Math.max(0, Math.min(5, ench(gun, Enchantments.POWER_ARROWS)));
-        boolean flame = ench(gun, Enchantments.FLAMING_ARROWS) > 0;
-        int piercing = ench(gun, Enchantments.PIERCING);
-        boolean multishot = ench(gun, Enchantments.MULTISHOT) > 0;
-        boolean riptide = ench(gun, Enchantments.RIPTIDE) > 0;
-        // 精准采集：发射出去的物品不再偏移（散布为 0）
-        boolean silk = ench(gun, Enchantments.SILK_TOUCH) > 0;
+        int powerLevel = getPower(gun);
+        boolean flame = getToggle(gun, CFG_FLAME);
+        int piercing = getToggle(gun, CFG_PIERCING) ? 4 : 0;
+        boolean multishot = getToggle(gun, CFG_MULTISHOT);
+        boolean waterproof = getToggle(gun, CFG_WATERPROOF);
+        // 
+        boolean silk = getToggle(gun, CFG_SILK);
         float uncertainty = silk ? 0.0F : 6.0F;
 
         List<Vec3> directions = new ArrayList<>(3);
@@ -301,7 +356,7 @@ public class EternalDispenserGunItem extends Item {
         }
 
         boolean spawnEgg = single.getItem() instanceof SpawnEggItem;
-        // 无限附魔的发射器枪不能把末影珍珠当弹射物打（否则连发传送容易暴毙），只能当一般物品发射
+        // 开了「无限」时，末影珍珠只能当一般物品发射，避免连发传送暴毙
         boolean enderPearl = single.is(Items.ENDER_PEARL)
                 || single.is(ModItems.ETERNAL_ENDER_PEARL.get());
         boolean projectileAmmo = spawnEgg
@@ -313,22 +368,20 @@ public class EternalDispenserGunItem extends Item {
             boolean sideArrow = directions.size() > 1 && i != 1;
             if (projectileAmmo) {
                 spawnProjectileAmmo(level, player, single.copy(), origin, direction,
-                        powerLevel, flame, piercing, infinity, riptide, uncertainty, silk, sideArrow);
+                        powerLevel, flame, piercing, infinity, waterproof, uncertainty, silk, sideArrow);
             } else {
                 spawnItemAmmo(level, player, single.copy(), origin, direction,
-                        powerLevel, riptide, uncertainty);
+                        powerLevel, waterproof, uncertainty);
             }
         }
 
-        // 模组的永恒物品：只有「弹射物 / 刷怪蛋」能无限发射；
-        // 食物等普通物品即使来自本模组也只能发射一次（照常消耗）。
-        // 附魔无限同样只对弹射物生效。
+        // 
         boolean noConsume = projectileAmmo && (eternalAmmo || infinity);
         if (!noConsume) {
             ammo.shrink(1);
             setAmmo(gun, slot, ammo.isEmpty() ? ItemStack.EMPTY : ammo);
         }
-        // 和发射器一致的音效 / 粒子（1002 = 发射器发射事件）
+        // 鍜屽彂灏勫櫒涓€鑷寸殑闊虫晥 / 绮掑瓙锛?002 = 鍙戝皠鍣ㄥ彂灏勪簨浠讹級
         level.levelEvent(1002, player.blockPosition(), 0);
     }
 
@@ -370,27 +423,27 @@ public class EternalDispenserGunItem extends Item {
                 || stack.is(ModItems.ETERNAL_FIREWORK_ROCKET.get());
     }
 
-    /** 刷怪蛋走 {@link GunProjectile}，命中时生成生物；其他非投掷物走物品模式。 */
-    private void spawnItemAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
+    /** 鍒锋€泲璧?{@link GunProjectile}锛屽懡涓椂鐢熸垚鐢熺墿锛涘叾浠栭潪鎶曟幏鐗╄蛋鐗╁搧妯″紡銆?*/
+    private static void spawnItemAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
             Vec3 direction, int powerLevel, boolean riptide, float uncertainty) {
         GunProjectile projectile = new GunProjectile(level, origin.x, origin.y, origin.z, ammo);
         projectile.setMode(GunProjectile.MODE_ITEM);
         projectile.setPowerLevel(powerLevel);
         projectile.setRiptide(riptide);
         projectile.setOwner(player);
-        // 力量 V：像火球一样沿准星直线飞，去掉发射器原有的 +0.1 抬升
+        // 鍔涢噺 V锛氬儚鐏悆涓€鏍锋部鍑嗘槦鐩寸嚎椋烇紝鍘绘帀鍙戝皠鍣ㄥ師鏈夌殑 +0.1 鎶崌
         double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
         projectile.shoot(direction.x, vy, direction.z, 1.1F, uncertainty);
         level.addFreshEntity(projectile);
     }
 
-    /** 发射器枪也能发射模组的永恒物品——这些物品不消耗。 */
+    /** 鍙戝皠鍣ㄦ灙涔熻兘鍙戝皠妯＄粍鐨勬案鎭掔墿鍝佲€斺€旇繖浜涚墿鍝佷笉娑堣€椼€?*/
     private static boolean isEternalItem(ItemStack stack) {
         var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem());
         return key != null && EternalFoodMod.MOD_ID.equals(key.getNamespace());
     }
 
-    private void spawnProjectileAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
+    private static void spawnProjectileAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
             Vec3 direction, int powerLevel, boolean flame, int piercing, boolean infinity,
             boolean riptide, float uncertainty, boolean silk, boolean sideArrow) {
         if (ammo.getItem() instanceof SpawnEggItem) {
@@ -428,9 +481,8 @@ public class EternalDispenserGunItem extends Item {
             GunProjectileTracker.markInfinite(projectile);
         }
         if (projectile instanceof AbstractArrow arrow) {
-            // 默认和原版一样可捡回背包；以下情况不可被生存玩家拾取（创造模式捡到但拿不到东西，
-            // 与原版 CREATIVE_ONLY 一致）：
-            //   附魔无限 / 多重射击的两支侧箭 / 永恒药箭
+            // 榛樿鍜屽師鐗堜竴鏍峰彲鎹″洖鑳屽寘锛涗互涓嬫儏鍐典笉鍙鐢熷瓨鐜╁鎷惧彇锛堝垱閫犳ā寮忔崱鍒颁絾鎷夸笉鍒颁笢瑗匡紝
+            // 涓庡師鐗?CREATIVE_ONLY 涓€鑷达級锛?            //   闄勯瓟鏃犻檺 / 澶氶噸灏勫嚮鐨勪袱鏀晶绠?/ 姘告亽鑽
             boolean unpickable = infinity || sideArrow
                     || ammo.is(ModItems.ETERNAL_TIPPED_ARROW.get());
             arrow.pickup = unpickable ? AbstractArrow.Pickup.CREATIVE_ONLY
@@ -532,7 +584,7 @@ public class EternalDispenserGunItem extends Item {
         return null;
     }
 
-    /** 恶魂火球 / 凋灵之首：与发射器一致，用三角形散布 + 0.1 推进力（精准采集时散布为 0）。 */
+    /** 鎭堕瓊鐏悆 / 鍑嬬伒涔嬮锛氫笌鍙戝皠鍣ㄤ竴鑷达紝鐢ㄤ笁瑙掑舰鏁ｅ竷 + 0.1 鎺ㄨ繘鍔涳紙绮惧噯閲囬泦鏃舵暎甯冧负 0锛夈€?*/
     private static AbstractHurtingProjectile heavyProjectile(ServerLevel level, Vec3 origin,
             Vec3 direction, RandomSource random, boolean fireball, boolean silk) {
         AbstractHurtingProjectile projectile;
@@ -568,6 +620,10 @@ public class EternalDispenserGunItem extends Item {
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.usage")
                 .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.open_ammo")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.open_config")
+                .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.delay",
                 String.format(java.util.Locale.ROOT, "%.2f", getFireDelay(stack) / 20.0F))
                 .withStyle(ChatFormatting.GRAY));
@@ -576,34 +632,41 @@ public class EternalDispenserGunItem extends Item {
                 .withStyle(ChatFormatting.DARK_GRAY));
     }
 
-    /** 这把枪支持的附魔（用于 Shift 提示）。 */
-    public static List<Enchantment> supportedEnchantments() {
-        return List.of(Enchantments.INFINITY_ARROWS,
-                Enchantments.POWER_ARROWS, Enchantments.FLAMING_ARROWS,
-                Enchantments.MULTISHOT, Enchantments.PIERCING,
-                Enchantments.RIPTIDE, Enchantments.SILK_TOUCH);
+    /** Shift 鎻愮ず鐢細褰撳墠寮€鍚殑閰嶇疆璇存槑銆?*/
+    public static List<Component> activeConfigLines(ItemStack gun) {
+        List<Component> lines = new ArrayList<>();
+        if (getToggle(gun, CFG_INFINITY)) {
+            lines.add(effectLine("infinity"));
+        }
+        int power = getPower(gun);
+        if (power > 0) {
+            lines.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.power",
+                    Component.translatable("enchantment.level." + power))
+                    .withStyle(ChatFormatting.GRAY));
+        }
+        if (getToggle(gun, CFG_FLAME)) {
+            lines.add(effectLine("flame"));
+        }
+        if (getToggle(gun, CFG_MULTISHOT)) {
+            lines.add(effectLine("multishot"));
+        }
+        if (getToggle(gun, CFG_PIERCING)) {
+            lines.add(effectLine("piercing"));
+        }
+        if (getToggle(gun, CFG_WATERPROOF)) {
+            lines.add(effectLine("waterproof"));
+        }
+        if (getToggle(gun, CFG_SILK)) {
+            lines.add(effectLine("silk_touch"));
+        }
+        return lines;
     }
 
-    /** 对应附魔效果的翻译键。 */
-    public static String enchantEffectKey(Enchantment enchantment) {
-        if (enchantment == Enchantments.INFINITY_ARROWS) {
-            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.infinity";
-        }
-        if (enchantment == Enchantments.POWER_ARROWS) {
-            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.power";
-        }
-        if (enchantment == Enchantments.FLAMING_ARROWS) {
-            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.flame";
-        }
-        if (enchantment == Enchantments.MULTISHOT) {
-            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.multishot";
-        }
-        if (enchantment == Enchantments.PIERCING) {
-            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.piercing";
-        }
-        if (enchantment == Enchantments.RIPTIDE) {
-            return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.riptide";
-        }
-        return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.silk_touch";
+    private static Component effectLine(String name) {
+        return Component.translatable(
+                "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect." + name)
+                .withStyle(ChatFormatting.GRAY);
     }
 }
+
