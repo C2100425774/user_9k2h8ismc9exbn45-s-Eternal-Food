@@ -489,7 +489,7 @@ public class EternalDispenserGunItem extends Item {
             projectile.setSecondsOnFire(100);
         }
         if (piercing > 0 && projectile instanceof AbstractArrow arrow) {
-            arrow.setPierceLevel((byte) Math.min(piercing, 4));
+            arrow.setPierceLevel((byte) Math.min(piercing, 10));
         }
         if (infinity) {
             GunProjectileTracker.markInfinite(projectile);
