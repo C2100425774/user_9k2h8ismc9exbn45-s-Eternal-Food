@@ -112,7 +112,9 @@ public class GunProjectile extends ThrowableItemProjectile {
                 this.discard();
                 return;
             }
-            this.setNoGravity(true);
+            this.setNoGravity(false);
+            // 力量 V：不关重力，只补回 90% 的重力，等效 10% 重力
+            this.setDeltaMovement(before.add(0.0, 0.03 * 0.9, 0.0));
             super.tick();
             return;
         }
