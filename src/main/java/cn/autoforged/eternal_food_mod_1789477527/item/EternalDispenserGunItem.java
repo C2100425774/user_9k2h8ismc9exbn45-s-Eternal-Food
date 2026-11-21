@@ -306,10 +306,12 @@ public class EternalDispenserGunItem extends Item {
         boolean projectileAmmo = spawnEgg || isProjectileAmmo(single);
         boolean eternalAmmo = isEternalItem(single);
 
-        for (Vec3 direction : directions) {
+        for (int i = 0; i < directions.size(); i++) {
+            Vec3 direction = directions.get(i);
+            boolean sideArrow = directions.size() > 1 && i != 1;
             if (projectileAmmo) {
                 spawnProjectileAmmo(level, player, single.copy(), origin, direction,
-                        powerLevel, flame, piercing, infinity, riptide, uncertainty, silk);
+                        powerLevel, flame, piercing, infinity, riptide, uncertainty, silk, sideArrow);
             } else {
                 spawnItemAmmo(level, player, single.copy(), origin, direction,
                         powerLevel, riptide, uncertainty);
@@ -383,7 +385,7 @@ public class EternalDispenserGunItem extends Item {
 
     private void spawnProjectileAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
             Vec3 direction, int powerLevel, boolean flame, int piercing, boolean infinity,
-            boolean riptide, float uncertainty, boolean silk) {
+            boolean riptide, float uncertainty, boolean silk, boolean sideArrow) {
         if (ammo.getItem() instanceof SpawnEggItem) {
             GunProjectile projectile = new GunProjectile(level, origin.x, origin.y, origin.z, ammo);
             projectile.setMode(GunProjectile.MODE_SPAWN_EGG);
@@ -413,11 +415,16 @@ public class EternalDispenserGunItem extends Item {
             arrow.setPierceLevel((byte) Math.min(piercing, 4));
         }
         if (infinity) {
-            // 只有无限附魔的弹射物不可拾取；箭类落地停住 0.5 秒后消失
-            if (projectile instanceof AbstractArrow arrow) {
-                arrow.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
-            }
             GunProjectileTracker.markInfinite(projectile);
+        }
+        if (projectile instanceof AbstractArrow arrow) {
+            // 默认和原版一样可捡回背包；以下情况不可被生存玩家拾取（创造模式捡到但拿不到东西，
+            // 与原版 CREATIVE_ONLY 一致）：
+            //   附魔无限 / 多重射击的两支侧箭 / 永恒药箭
+            boolean unpickable = infinity || sideArrow
+                    || ammo.is(ModItems.ETERNAL_TIPPED_ARROW.get());
+            arrow.pickup = unpickable ? AbstractArrow.Pickup.CREATIVE_ONLY
+                    : AbstractArrow.Pickup.ALLOWED;
         }
         if (riptide) {
             GunProjectileTracker.markRiptide(projectile);
@@ -544,14 +551,10 @@ public class EternalDispenserGunItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.usage")
-                .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.delay",
-                String.format(java.util.Locale.ROOT, "%.1f", getFireDelay(stack) / 20.0F))
-                .withStyle(ChatFormatting.GRAY));
         Boolean shift = DistExecutor.unsafeCallWhenOn(Dist.CLIENT,
                 () -> () -> net.minecraft.client.gui.screens.Screen.hasShiftDown());
         if (Boolean.TRUE.equals(shift)) {
+            // 按住 Shift：切换成「附魔效果」这一份提示（替代普通说明，避免提示框太长）
             List<Enchantment> list = List.of(Enchantments.INFINITY_ARROWS,
                     Enchantments.POWER_ARROWS, Enchantments.FLAMING_ARROWS,
                     Enchantments.MULTISHOT, Enchantments.PIERCING,
@@ -570,11 +573,16 @@ public class EternalDispenserGunItem extends Item {
                         "tooltip.eternal_food_mod_1789477527.dispenser_gun.no_enchant")
                         .withStyle(ChatFormatting.DARK_GRAY));
             }
-        } else {
-            tooltip.add(Component.translatable(
-                    "tooltip.eternal_food_mod_1789477527.dispenser_gun.shift")
-                    .withStyle(ChatFormatting.DARK_GRAY));
+            return;
         }
+        tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.usage")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.delay",
+                String.format(java.util.Locale.ROOT, "%.1f", getFireDelay(stack) / 20.0F))
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable(
+                "tooltip.eternal_food_mod_1789477527.dispenser_gun.shift")
+                .withStyle(ChatFormatting.DARK_GRAY));
     }
 
     private static String enchantEffectKey(Enchantment enchantment) {

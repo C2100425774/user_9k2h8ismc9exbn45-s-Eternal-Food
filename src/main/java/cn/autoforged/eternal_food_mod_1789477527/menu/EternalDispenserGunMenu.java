@@ -57,6 +57,11 @@ public class EternalDispenserGunMenu extends AbstractContainerMenu {
         return this.data.get(0);
     }
 
+    /** 界面里显示用的枪物品栈（客户端用它画「无限附魔 → 第 1 格金色」提示）。 */
+    public ItemStack getGun() {
+        return this.gun;
+    }
+
     @Override
     public boolean stillValid(Player player) {
         return true;
