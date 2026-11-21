@@ -145,8 +145,14 @@ public class EternalDispenserGunScreen extends AbstractContainerScreen<EternalDi
         }
 
         void dragTo(double mouseX) {
-            double newValue = (mouseX - (this.getX() + 4)) / (double) (this.width - 8);
-            this.value = Mth.clamp(newValue, 0.0, 1.0);
+            double raw = (mouseX - (this.getX() + 4)) / (double) (this.width - 8);
+            int ticks = EternalDispenserGunItem.MIN_DELAY_TICKS
+                    + (int) Math.round(Mth.clamp(raw, 0.0, 1.0)
+                            * (EternalDispenserGunItem.MAX_DELAY_TICKS
+                                    - EternalDispenserGunItem.MIN_DELAY_TICKS));
+            this.value = (ticks - EternalDispenserGunItem.MIN_DELAY_TICKS)
+                    / (double) (EternalDispenserGunItem.MAX_DELAY_TICKS
+                            - EternalDispenserGunItem.MIN_DELAY_TICKS);
             this.updateMessage();
         }
 
@@ -177,7 +183,7 @@ public class EternalDispenserGunScreen extends AbstractContainerScreen<EternalDi
             this.lastShown = ticks;
             this.setMessage(Component.translatable(
                     "gui.eternal_food_mod_1789477527.dispenser_gun.delay",
-                    String.format(java.util.Locale.ROOT, "%.1f", ticks / 20.0F)));
+                    String.format(java.util.Locale.ROOT, "%.2f", ticks / 20.0F)));
         }
 
         @Override

@@ -51,8 +51,6 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkHooks;
 
 /**
@@ -318,8 +316,11 @@ public class EternalDispenserGunItem extends Item {
             }
         }
 
-        // 模组的永恒物品发射后不消耗；无限附魔只对「弹射物类」生效；其余照常消耗
-        if (!eternalAmmo && !(infinity && projectileAmmo)) {
+        // 模组的永恒物品：只有「弹射物 / 刷怪蛋」能无限发射；
+        // 食物等普通物品即使来自本模组也只能发射一次（照常消耗）。
+        // 附魔无限同样只对弹射物生效。
+        boolean noConsume = projectileAmmo && (eternalAmmo || infinity);
+        if (!noConsume) {
             ammo.shrink(1);
             setAmmo(gun, slot, ammo.isEmpty() ? ItemStack.EMPTY : ammo);
         }
@@ -551,41 +552,26 @@ public class EternalDispenserGunItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        Boolean shift = DistExecutor.unsafeCallWhenOn(Dist.CLIENT,
-                () -> () -> net.minecraft.client.gui.screens.Screen.hasShiftDown());
-        if (Boolean.TRUE.equals(shift)) {
-            // 按住 Shift：切换成「附魔效果」这一份提示（替代普通说明，避免提示框太长）
-            List<Enchantment> list = List.of(Enchantments.INFINITY_ARROWS,
-                    Enchantments.POWER_ARROWS, Enchantments.FLAMING_ARROWS,
-                    Enchantments.MULTISHOT, Enchantments.PIERCING,
-                    Enchantments.RIPTIDE, Enchantments.SILK_TOUCH);
-            boolean any = false;
-            for (Enchantment enchantment : list) {
-                if (ench(stack, enchantment) <= 0) {
-                    continue;
-                }
-                any = true;
-                tooltip.add(Component.translatable(enchantEffectKey(enchantment))
-                        .withStyle(ChatFormatting.GRAY));
-            }
-            if (!any) {
-                tooltip.add(Component.translatable(
-                        "tooltip.eternal_food_mod_1789477527.dispenser_gun.no_enchant")
-                        .withStyle(ChatFormatting.DARK_GRAY));
-            }
-            return;
-        }
         tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.usage")
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.delay",
-                String.format(java.util.Locale.ROOT, "%.1f", getFireDelay(stack) / 20.0F))
+                String.format(java.util.Locale.ROOT, "%.2f", getFireDelay(stack) / 20.0F))
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable(
                 "tooltip.eternal_food_mod_1789477527.dispenser_gun.shift")
                 .withStyle(ChatFormatting.DARK_GRAY));
     }
 
-    private static String enchantEffectKey(Enchantment enchantment) {
+    /** 这把枪支持的附魔（用于 Shift 提示）。 */
+    public static List<Enchantment> supportedEnchantments() {
+        return List.of(Enchantments.INFINITY_ARROWS,
+                Enchantments.POWER_ARROWS, Enchantments.FLAMING_ARROWS,
+                Enchantments.MULTISHOT, Enchantments.PIERCING,
+                Enchantments.RIPTIDE, Enchantments.SILK_TOUCH);
+    }
+
+    /** 对应附魔效果的翻译键。 */
+    public static String enchantEffectKey(Enchantment enchantment) {
         if (enchantment == Enchantments.INFINITY_ARROWS) {
             return "tooltip.eternal_food_mod_1789477527.dispenser_gun.enchant.infinity";
         }
