@@ -455,7 +455,7 @@ public class EternalDispenserGunItem extends Item {
         projectile.setOwner(player);
         // 鍔涢噺 V锛氬儚鐏悆涓€鏍锋部鍑嗘槦鐩寸嚎椋烇紝鍘绘帀鍙戝皠鍣ㄥ師鏈夌殑 +0.1 鎶崌
         double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
-        projectile.shoot(direction.x, vy, direction.z, 1.1F, uncertainty);
+        projectile.shoot(direction.x, vy, direction.z, projectileSpeed(powerLevel), uncertainty);
         level.addFreshEntity(projectile);
     }
 
@@ -476,7 +476,7 @@ public class EternalDispenserGunItem extends Item {
             projectile.setPowerLevel(powerLevel);
             projectile.setOwner(player);
             double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
-            projectile.shoot(direction.x, vy, direction.z, 1.1F, uncertainty);
+            projectile.shoot(direction.x, vy, direction.z, projectileSpeed(powerLevel), uncertainty);
             level.addFreshEntity(projectile);
             return;
         }
@@ -490,7 +490,7 @@ public class EternalDispenserGunItem extends Item {
                 || projectile instanceof WitherSkull;
         if (!customShot) {
             double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
-            projectile.shoot(direction.x, vy, direction.z, 1.1F, uncertainty);
+            projectile.shoot(direction.x, vy, direction.z, projectileSpeed(powerLevel), uncertainty);
         }
         projectile.setOwner(player);
         if (flame) {
@@ -628,6 +628,12 @@ public class EternalDispenserGunItem extends Item {
             projectile.zPower = dz / length * 0.1;
         }
         return projectile;
+    }
+
+
+    /** 打印速度：力量越高越快，5 级对齐原版弩的 3.15（约 100 格射程）。 */
+    private static float projectileSpeed(int powerLevel) {
+        return 1.1F + 0.41F * Math.max(0, Math.min(5, powerLevel));
     }
 
     private static Vec3 rotateY(Vec3 vector, double degrees) {
