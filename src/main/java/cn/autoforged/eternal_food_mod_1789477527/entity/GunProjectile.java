@@ -1,5 +1,6 @@
 package cn.autoforged.eternal_food_mod_1789477527.entity;
 
+import cn.autoforged.eternal_food_mod_1789477527.event.GunProjectileTracker;
 import cn.autoforged.eternal_food_mod_1789477527.item.EternalSpawnEggItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -107,6 +108,10 @@ public class GunProjectile extends ThrowableItemProjectile {
         double f = Math.max(0, Math.min(this.powerLevel, 5)) / 5.0;
         if (f >= 1.0) {
             // 力量 V：关重力 + 固定速度，走绝对直线（不会上下抖）
+            if (this.tickCount > GunProjectileTracker.POWERED_MAX_TICKS) {
+                this.discard();
+                return;
+            }
             if (this.straightVelocity == null) {
                 this.straightVelocity = before;
             }

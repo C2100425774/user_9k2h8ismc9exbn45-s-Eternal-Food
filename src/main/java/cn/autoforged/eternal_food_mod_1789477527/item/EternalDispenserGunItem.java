@@ -378,7 +378,9 @@ public class EternalDispenserGunItem extends Item {
         projectile.setPowerLevel(powerLevel);
         projectile.setRiptide(riptide);
         projectile.setOwner(player);
-        projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, uncertainty);
+        // 力量 V：像火球一样沿准星直线飞，去掉发射器原有的 +0.1 抬升
+        double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
+        projectile.shoot(direction.x, vy, direction.z, 1.1F, uncertainty);
         level.addFreshEntity(projectile);
     }
 
@@ -398,7 +400,8 @@ public class EternalDispenserGunItem extends Item {
             projectile.setRiptide(riptide);
             projectile.setPowerLevel(powerLevel);
             projectile.setOwner(player);
-            projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, uncertainty);
+            double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
+            projectile.shoot(direction.x, vy, direction.z, 1.1F, uncertainty);
             level.addFreshEntity(projectile);
             return;
         }
@@ -411,7 +414,8 @@ public class EternalDispenserGunItem extends Item {
                 || projectile instanceof LargeFireball
                 || projectile instanceof WitherSkull;
         if (!customShot) {
-            projectile.shoot(direction.x, direction.y + 0.1, direction.z, 1.1F, uncertainty);
+            double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
+            projectile.shoot(direction.x, vy, direction.z, 1.1F, uncertainty);
         }
         projectile.setOwner(player);
         if (flame) {

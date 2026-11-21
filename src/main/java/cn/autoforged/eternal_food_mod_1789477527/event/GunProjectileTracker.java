@@ -34,6 +34,8 @@ public final class GunProjectileTracker {
     public static final int INFINITE_STUCK_TICKS = 10;
     /** 无限附魔弹射物的安全寿命上限（防止卡在奇怪位置永远不消失）。 */
     public static final int INFINITE_MAX_TICKS = 200;
+    /** 力量 V 弹射物的安全寿命上限（无重力后可能一直飞，避免实体堆积）。 */
+    public static final int POWERED_MAX_TICKS = 400;
 
     private static final Set<Entity> INFINITE = Collections.synchronizedSet(
             Collections.newSetFromMap(new WeakHashMap<>()));
@@ -43,6 +45,7 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Integer> POWERED = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAUNCH = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<Entity, Vec3> LAST_POS = Collections.synchronizedMap(new WeakHashMap<>());
 
     private GunProjectileTracker() {
     }
@@ -108,28 +111,27 @@ public final class GunProjectileTracker {
             return;
         }
         // END -----------------------------------------------------------------
-        Iterator<Entity> infiniteIt = INFINITE.iterator();
-        while (infiniteIt.hasNext()) {
-            Entity entity = infiniteIt.next();
+        // 无限附魔：落地 / 卡住 0.5 秒消失；区块卸载直接消失；200 tick 安全上限
+        for (Entity entity : new ArrayList<>(INFINITE)) {
             if (!entity.isAlive() || entity.level() != level) {
-                infiniteIt.remove();
+                INFINITE.remove(entity);
                 STUCK_TICKS.remove(entity);
+                LAST_POS.remove(entity);
                 continue;
             }
-            boolean stuck = entity instanceof AbstractArrow arrow
-                    && (arrow.onGround() || arrow.getDeltaMovement().lengthSqr() < 0.0025);
-            if (entity.tickCount >= INFINITE_MAX_TICKS) {
-                stuck = true;
-            }
-            if (stuck) {
-                int ticks = STUCK_TICKS.getOrDefault(entity, 0) + 1;
-                if (ticks >= INFINITE_STUCK_TICKS) {
-                    entity.discard();
-                    infiniteIt.remove();
-                    STUCK_TICKS.remove(entity);
-                } else {
-                    STUCK_TICKS.put(entity, ticks);
-                }
+            boolean unloaded = !level.hasChunkAt(entity.blockPosition());
+            Vec3 pos = entity.position();
+            Vec3 last = LAST_POS.put(entity, pos);
+            boolean still = last != null && last.distanceToSqr(pos) < 1.0E-4;
+            int stillTicks = still ? STUCK_TICKS.getOrDefault(entity, 0) + 1 : 0;
+            if (unloaded || stillTicks >= INFINITE_STUCK_TICKS
+                    || entity.tickCount >= INFINITE_MAX_TICKS) {
+                entity.discard();
+                INFINITE.remove(entity);
+                STUCK_TICKS.remove(entity);
+                LAST_POS.remove(entity);
+            } else {
+                STUCK_TICKS.put(entity, stillTicks);
             }
         }
         // 力量 1~4：补回一部分重力 + 一部分水平阻力（不做整体还原，避免上下抖）
@@ -141,6 +143,12 @@ public final class GunProjectileTracker {
                 continue;
             }
             if (before == null) {
+                continue;
+            }
+            if (entity.tickCount >= POWERED_MAX_TICKS) {
+                entity.discard();
+                POWERED.remove(entity);
+                LAUNCH.remove(entity);
                 continue;
             }
             int power = POWERED.get(entity);
