@@ -633,10 +633,10 @@ public class EternalDispenserGunItem extends Item {
 
     /** 打印速度：力量越高越快，5 级对齐原版弩的 3.15（约 100 格射程）。 */
     private static float projectileSpeed(int powerLevel) {
-        // 参考 TaCZ 最远的狙击枪 ai_awp：数据里 speed=575（按每秒换算成每 tick 约 28.75）。
-        // 0 级保留发射器的 1.1，5 级 28.75，其余线性。
+        // 速度上限取原版弩的 3.15：超过这个速度，客户端实体同步会稀疏，
+        // 出现「位置跳跃/瞬移」的观感；0 级保留发射器 1.1，5 级 3.15，其余线性。
         int power = Math.max(0, Math.min(5, powerLevel));
-        return 1.1F + (28.75F - 1.1F) * power / 5.0F;
+        return 1.1F + (3.15F - 1.1F) * power / 5.0F;
     }
 
     private static Vec3 rotateY(Vec3 vector, double degrees) {
