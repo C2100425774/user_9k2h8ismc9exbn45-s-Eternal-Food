@@ -189,6 +189,7 @@ public class GunConfigScreen extends Screen {
         private final int min;
         private final int max;
         private final String labelKey;
+        private int lastSent;
 
         StepSlider(int x, int y, int width, int height, String key, int min, int max, int value,
                 String labelKey) {
@@ -197,11 +198,20 @@ public class GunConfigScreen extends Screen {
             this.min = min;
             this.max = max;
             this.labelKey = labelKey;
+            this.lastSent = value;
             this.updateMessage();
         }
 
         int level() {
             return this.min + (int) Math.round(this.value * (this.max - this.min));
+        }
+
+        private void push() {
+            int level = this.level();
+            if (level != this.lastSent) {
+                this.lastSent = level;
+                ModNetwork.CHANNEL.sendToServer(new GunConfigPacket(this.key, level));
+            }
         }
 
         @Override
@@ -215,17 +225,20 @@ public class GunConfigScreen extends Screen {
             int level = this.level();
             this.value = (level - this.min) / (double) (this.max - this.min);
             this.updateMessage();
+            this.push();
         }
 
         @Override
         public void onRelease(double mouseX, double mouseY) {
             super.onRelease(mouseX, mouseY);
-            ModNetwork.CHANNEL.sendToServer(new GunConfigPacket(this.key, this.level()));
+            this.push();
         }
     }
 
     /** 发射间隔滑条：1~30 tick，显示秒（0.05 ~ 1.50）。 */
     private class DelaySlider extends AbstractSliderButton {
+
+        private int lastSent;
 
         DelaySlider(int x, int y, int width, int height) {
             super(x, y, width, height, Component.empty(),
@@ -233,6 +246,7 @@ public class GunConfigScreen extends Screen {
                             - EternalDispenserGunItem.MIN_DELAY_TICKS)
                             / (double) (EternalDispenserGunItem.MAX_DELAY_TICKS
                                     - EternalDispenserGunItem.MIN_DELAY_TICKS));
+            this.lastSent = EternalDispenserGunItem.getFireDelay(GunConfigScreen.this.gun);
             this.updateMessage();
         }
 
@@ -242,12 +256,22 @@ public class GunConfigScreen extends Screen {
                             - EternalDispenserGunItem.MIN_DELAY_TICKS));
         }
 
+        private void push() {
+            int ticks = this.ticks();
+            if (ticks != this.lastSent) {
+                this.lastSent = ticks;
+                ModNetwork.CHANNEL.sendToServer(new GunConfigPacket(
+                        EternalDispenserGunItem.CFG_DELAY, ticks));
+            }
+        }
+
         /** 「默认」按钮：立即回到默认间隔并同步。 */
         void setTicks(int ticks) {
             this.value = (ticks - EternalDispenserGunItem.MIN_DELAY_TICKS)
                     / (double) (EternalDispenserGunItem.MAX_DELAY_TICKS
                             - EternalDispenserGunItem.MIN_DELAY_TICKS);
             this.updateMessage();
+            this.lastSent = ticks;
             ModNetwork.CHANNEL.sendToServer(new GunConfigPacket(
                     EternalDispenserGunItem.CFG_DELAY, this.ticks()));
         }
