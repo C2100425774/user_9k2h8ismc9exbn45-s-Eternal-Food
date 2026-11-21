@@ -112,11 +112,7 @@ public class GunProjectile extends ThrowableItemProjectile {
                 this.discard();
                 return;
             }
-            if (this.straightVelocity == null) {
-                this.straightVelocity = before;
-            }
             this.setNoGravity(true);
-            this.setDeltaMovement(this.straightVelocity);
             super.tick();
             return;
         }

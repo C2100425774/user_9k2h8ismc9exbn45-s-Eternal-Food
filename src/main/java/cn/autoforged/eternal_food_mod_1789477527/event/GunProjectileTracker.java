@@ -119,7 +119,6 @@ public final class GunProjectileTracker {
         int clamped = Math.max(0, Math.min(5, level));
         if (clamped > 0) {
             POWERED.put(entity, clamped);
-            LAUNCH.put(entity, entity.getDeltaMovement());
         }
     }
 
@@ -148,11 +147,12 @@ public final class GunProjectileTracker {
                 }
                 int power = POWERED.get(entity);
                 if (power >= 5) {
-                    // 5 级：关重力 + 固定速度，走绝对直线
+                    // 5 级：只关重力，不再每 tick 强行改速度。
+                    // 之前每 tick 把速度设回出膛速度，箭打中无敌目标被弹回后又被推回去，
+                    // 表现成「低速原路返回」；现在交回原版运动，命中弹开/停下都正常。
                     entity.setNoGravity(true);
-                    Vec3 launch = LAUNCH.get(entity);
-                    if (launch != null) {
-                        entity.setDeltaMovement(launch);
+                    if (entity.tickCount >= POWERED_MAX_TICKS) {
+                        entity.discard();
                     }
                 } else {
                     PRE_TICK.put(entity, entity.getDeltaMovement());
