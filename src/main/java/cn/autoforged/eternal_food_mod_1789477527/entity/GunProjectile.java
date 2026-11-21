@@ -105,27 +105,13 @@ public class GunProjectile extends ThrowableItemProjectile {
     @Override
     public void tick() {
         Vec3 before = this.getDeltaMovement();
-        double f = Math.max(0, Math.min(this.powerLevel, 5)) / 5.0;
-        if (f >= 1.0) {
-            // 力量 V：关重力 + 固定速度，走绝对直线（不会上下抖）
-            if (this.tickCount > GunProjectileTracker.POWERED_MAX_TICKS) {
-                this.discard();
-                return;
-            }
-            // 力量 V：完全不改速度，正常重力（高速下坠可忽略）
-            super.tick();
-            return;
-        }
         super.tick();
         if (this.riptide && this.isInWater()) {
-            // 激流：完全无视水阻力
+            // 防水：完全无视水阻力
             this.setDeltaMovement(before);
-        } else if (f > 0.0) {
-            // 力量 1~4：补回一部分重力 + 一部分水平阻力
-            Vec3 now = this.getDeltaMovement();
-            double nx = now.x + (before.x - now.x) * f;
-            double nz = now.z + (before.z - now.z) * f;
-            this.setDeltaMovement(nx, now.y + 0.03 * f, nz);
+        }
+        if (this.tickCount > GunProjectileTracker.POWERED_MAX_TICKS) {
+            this.discard();
         }
     }
 

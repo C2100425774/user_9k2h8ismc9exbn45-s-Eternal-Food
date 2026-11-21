@@ -95,12 +95,8 @@ public final class GunProjectileTracker {
                 if (!entity.isAlive() || entity.level() != level) {
                     continue;
                 }
+                // 只记录速度用于「被弹开/停住」判定，不再做任何重力/阻力补偿
                 PRE_TICK.put(entity, entity.getDeltaMovement());
-                // 力量 5 不做任何重力补偿：28.75 格/tick 的高速下重力下坠可以忽略不计，
-                // 提前补重力会让位置每 tick 被额外抬高，表现为一直往上飘。
-                if (POWERED.get(entity) >= 5) {
-                    entity.setNoGravity(false);
-                }
                 if (entity.tickCount >= POWERED_MAX_TICKS) {
                     entity.discard();
                 }
@@ -184,16 +180,8 @@ public final class GunProjectileTracker {
                 continue;
             }
             POWER_STILL.remove(entity);
-            int power = POWERED.get(entity);
-            if (power >= 5) {
-                // 力量 5 完全不动速度
-                continue;
-            }
-            double f = power / 5.0;
-            double gravity = gravityOf(entity) * f;
-            double nx = now.x + (before.x - now.x) * f;
-            double nz = now.z + (before.z - now.z) * f;
-            entity.setDeltaMovement(nx, now.y + gravity, nz);
+            // 不做任何补偿：力量等级只影响出膛速度，弹道完全交给原版
+            // （之前在这里补重力和水平阻力，x/y/z 不同步导致左右/上下漂移）
         }
         // 防水：水中无视阻力
         for (Entity entity : new ArrayList<>(RIPTIDE)) {
