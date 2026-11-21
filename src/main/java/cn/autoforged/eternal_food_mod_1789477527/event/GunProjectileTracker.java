@@ -46,6 +46,7 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Vec3> LAUNCH = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAST_POS = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<Entity, Integer> POWER_STILL = Collections.synchronizedMap(new WeakHashMap<>());
 
     private GunProjectileTracker() {
     }
@@ -94,13 +95,9 @@ public final class GunProjectileTracker {
                 if (!entity.isAlive() || entity.level() != level) {
                     continue;
                 }
-                int power = POWERED.get(entity);
                 PRE_TICK.put(entity, entity.getDeltaMovement());
-                if (power >= 5) {
-                    entity.setNoGravity(true);
-                    if (entity.tickCount >= POWERED_MAX_TICKS) {
-                        entity.discard();
-                    }
+                if (entity.tickCount >= POWERED_MAX_TICKS) {
+                    entity.discard();
                 }
             }
             for (Entity entity : new ArrayList<>(RIPTIDE)) {
@@ -170,9 +167,18 @@ public final class GunProjectileTracker {
                 entity.setNoGravity(false);
                 continue;
             }
-            if (before == null || POWERED.get(entity) >= 5) {
+            if (before == null) {
                 continue;
             }
+            // 停在空中不动的力量弹射物：短暂停留后直接清掉，避免一直悬浮
+            if (!entity.onGround() && now.lengthSqr() < 4.0E-4) {
+                int still = POWER_STILL.merge(entity, 1, Integer::sum);
+                if (still >= 20) {
+                    entity.discard();
+                }
+                continue;
+            }
+            POWER_STILL.remove(entity);
             int power = POWERED.get(entity);
             double f = power / 5.0;
             double gravity = gravityOf(entity) * f;
