@@ -96,6 +96,11 @@ public final class GunProjectileTracker {
                     continue;
                 }
                 PRE_TICK.put(entity, entity.getDeltaMovement());
+                if (POWERED.get(entity) >= 5) {
+                    // 力量 5：直接关重力，完全不动速度。
+                    // 原版阻力对 x/y/z 同步衰减，方向不变 → 天然直线，不落也不上飘。
+                    entity.setNoGravity(true);
+                }
                 if (entity.tickCount >= POWERED_MAX_TICKS) {
                     entity.discard();
                 }
@@ -181,10 +186,7 @@ public final class GunProjectileTracker {
             POWER_STILL.remove(entity);
             int power = POWERED.get(entity);
             if (power >= 5) {
-                // 力量 5：模仿 TaCZ 狙击弹的「极低重力 + 极低阻力」：
-                // 只补回这一 tick 的重力，不还原水平速度，阻力对 x/y/z 同步衰减，
-                // 所以轨迹是一条直线（速度轻微衰减，但不会下坠/上飘）。
-                entity.setDeltaMovement(now.x, now.y + gravityOf(entity), now.z);
+                // 力量 5 只关重力，速度完全不改（方向由原版阻力同步衰减保持）
                 continue;
             }
             double f = power / 5.0;
