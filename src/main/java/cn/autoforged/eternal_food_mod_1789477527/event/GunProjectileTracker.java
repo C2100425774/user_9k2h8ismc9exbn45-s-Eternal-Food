@@ -31,9 +31,9 @@ import net.minecraftforge.fml.common.Mod;
 public final class GunProjectileTracker {
 
     /** 无限附魔：箭停住后的存活时间（0.5 秒）。 */
-    public static final int INFINITE_STUCK_TICKS = 10;
+    public static final int INFINITE_STUCK_TICKS = 5;
     /** 无限附魔弹射物的安全寿命上限（防止卡在奇怪位置永远不消失）。 */
-    public static final int INFINITE_MAX_TICKS = 100;
+    public static final int INFINITE_MAX_TICKS = 50;
     /** 力量 V 弹射物的安全寿命上限（无重力后可能一直飞，避免实体堆积）。 */
     public static final int POWERED_MAX_TICKS = 400;
 
@@ -72,7 +72,7 @@ public final class GunProjectileTracker {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
-        if (event.getServer().getTickCount() % 5 != 0) {
+        if (event.getServer().getTickCount() % 2 != 0) {
             return;
         }
         for (ServerLevel level : event.getServer().getAllLevels()) {

@@ -74,6 +74,12 @@ public class GunConfigScreen extends Screen {
     }
 
     @Override
+    public boolean isPauseScreen() {
+        // 和打开原版发射器一样，不暂停游戏
+        return false;
+    }
+
+    @Override
     public void renderBackground(GuiGraphics graphics) {
         // 不要整屏变暗，只画中间的小面板
     }
@@ -81,20 +87,23 @@ public class GunConfigScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
-        graphics.fill(this.panelX, this.panelY, this.panelX + PANEL_W, this.panelY + PANEL_H,
-                0xE0101010);
-        int border = 0xFF909090;
-        graphics.fill(this.panelX, this.panelY, this.panelX + PANEL_W, this.panelY + 1, border);
-        graphics.fill(this.panelX, this.panelY + PANEL_H - 1,
-                this.panelX + PANEL_W, this.panelY + PANEL_H, border);
-        graphics.fill(this.panelX, this.panelY, this.panelX + 1, this.panelY + PANEL_H, border);
-        graphics.fill(this.panelX + PANEL_W - 1, this.panelY,
-                this.panelX + PANEL_W, this.panelY + PANEL_H, border);
+        int x = this.panelX;
+        int y = this.panelY;
+        int w = PANEL_W;
+        int h = PANEL_H;
+        // 原版物品栏那种灰色面板 + 立体边框
+        graphics.fill(x, y, x + w, y + h, 0xFFC6C6C6);
+        graphics.fill(x, y, x + w, y + 1, 0xFFFFFFFF);
+        graphics.fill(x, y, x + 1, y + h, 0xFFFFFFFF);
+        graphics.fill(x, y + h - 1, x + w, y + h, 0xFF555555);
+        graphics.fill(x + w - 1, y, x + w, y + h, 0xFF555555);
+        graphics.fill(x + 1, y + 1, x + w - 1, y + 2, 0xFFB0B0B0);
+        graphics.fill(x + 1, y + h - 2, x + w - 1, y + h - 1, 0xFFFFFFFF);
         super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawCenteredString(this.font, this.title, this.width / 2, this.panelY + 8, 0xFFFFFF);
+        graphics.drawCenteredString(this.font, this.title, this.width / 2, this.panelY + 8, 0x404040);
         graphics.drawCenteredString(this.font,
                 Component.translatable("gui.eternal_food_mod_1789477527.dispenser_gun.config_hint"),
-                this.width / 2, this.panelY + 24, 0xA0A0A0);
+                this.width / 2, this.panelY + 24, 0x707070);
         for (ToggleButton button : this.toggles) {
             if (button.isMouseOver(mouseX, mouseY)) {
                 graphics.renderTooltip(this.font,
