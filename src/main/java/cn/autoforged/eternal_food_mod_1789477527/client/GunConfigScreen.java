@@ -291,6 +291,7 @@ public class GunConfigScreen extends Screen {
                     / (double) (EternalDispenserGunItem.MAX_DELAY_TICKS
                             - EternalDispenserGunItem.MIN_DELAY_TICKS);
             this.updateMessage();
+            this.push();
         }
 
         @Override
