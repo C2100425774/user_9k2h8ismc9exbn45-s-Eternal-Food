@@ -164,6 +164,7 @@ public class EternalDispenserGunItem extends Item {
     public static final String CFG_WATERPROOF = "CfgWaterproof";
     public static final String CFG_SILK = "CfgSilkTouch";
     public static final String CFG_POWER = "CfgPower";
+    public static final String CFG_DELAY = TAG_DELAY;
     private static final String CFG_LAST_FIRE = "CfgLastFire";
 
     /** 閰嶇疆鐣岄潰閲岀殑寮€鍏虫寜閽紙椤哄簭鍗崇晫闈㈤『搴忥級銆?*/
@@ -317,6 +318,8 @@ public class EternalDispenserGunItem extends Item {
             setPower(gun, value);
         } else if (CFG_PIERCING.equals(key)) {
             setPiercing(gun, value);
+        } else if (CFG_DELAY.equals(key)) {
+            setFireDelay(gun, value);
         } else {
             setToggle(gun, key, value != 0);
         }

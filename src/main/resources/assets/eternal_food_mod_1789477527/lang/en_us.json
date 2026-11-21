@@ -188,5 +188,6 @@
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.waterproof": "Waterproof",
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.silk_touch": "Silk Touch",
   "itemGroup.eternal_food_mod_1789477527": "Eternal Vanilla Food",
-  "gui.eternal_food_mod_1789477527.dispenser_gun.piercing": "Piercing: %s"
+  "gui.eternal_food_mod_1789477527.dispenser_gun.piercing": "Piercing: %s",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.delay": "Fire interval: 1~30 ticks (0.05 ~ 1.50 s)"
 }

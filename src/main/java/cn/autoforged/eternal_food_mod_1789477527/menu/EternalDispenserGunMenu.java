@@ -30,15 +30,15 @@ public class EternalDispenserGunMenu extends AbstractContainerMenu {
         for (int i = 0; i < 9; i++) {
             this.addSlot(new Slot(this.container, i, 62 + (i % 3) * 18, 17 + (i / 3) * 18));
         }
-        // 玩家背包 3×9（下方比原版发射器下移 28px，中间留给发射频率滑条）
+        // 玩家背包 3×9（与原版发射器一致）
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 112 + row * 18));
+                this.addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
             }
         }
         // 快捷栏
         for (int col = 0; col < 9; col++) {
-            this.addSlot(new Slot(inventory, col, 8 + col * 18, 170));
+            this.addSlot(new Slot(inventory, col, 8 + col * 18, 142));
         }
         this.addDataSlots(this.data);
     }

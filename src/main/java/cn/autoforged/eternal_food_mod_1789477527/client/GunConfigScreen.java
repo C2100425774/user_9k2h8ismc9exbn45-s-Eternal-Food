@@ -22,13 +22,14 @@ import net.minecraft.world.item.ItemStack;
 public class GunConfigScreen extends Screen {
 
     private static final int PANEL_W = 320;
-    private static final int PANEL_H = 236;
+    private static final int PANEL_H = 214;
     private static final int ROW = 24;
 
     private final ItemStack gun;
     private final List<ToggleButton> toggles = new ArrayList<>();
     private StepSlider powerSlider;
     private StepSlider piercingSlider;
+    private DelaySlider delaySlider;
     private int panelX;
     private int panelY;
 
@@ -66,11 +67,19 @@ public class GunConfigScreen extends Screen {
                 EternalDispenserGunItem.CFG_PIERCING, 0, 10, EternalDispenserGunItem.getPiercing(this.gun),
                 "gui.eternal_food_mod_1789477527.dispenser_gun.piercing");
         this.addRenderableWidget(this.piercingSlider);
-        this.addRenderableWidget(Button.builder(
-                        Component.translatable("gui.eternal_food_mod_1789477527.dispenser_gun.done"),
-                        button -> this.onClose())
-                .bounds(this.panelX + PANEL_W / 2 - 50, sliderY + 60, 100, 20)
-                .build());
+        this.delaySlider = new DelaySlider(left, sliderY + 52, PANEL_W - 20, 20);
+        this.addRenderableWidget(this.delaySlider);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // 像原版容器一样：E 或 Esc 直接关闭
+        if (keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_E
+                || keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+            this.onClose();
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
@@ -120,6 +129,11 @@ public class GunConfigScreen extends Screen {
         if (this.piercingSlider != null && this.piercingSlider.isMouseOver(mouseX, mouseY)) {
             graphics.renderTooltip(this.font,
                     Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.option.piercing"),
+                    mouseX, mouseY);
+        }
+        if (this.delaySlider != null && this.delaySlider.isMouseOver(mouseX, mouseY)) {
+            graphics.renderTooltip(this.font,
+                    Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.option.delay"),
                     mouseX, mouseY);
         }
     }
@@ -202,6 +216,49 @@ public class GunConfigScreen extends Screen {
         public void onRelease(double mouseX, double mouseY) {
             super.onRelease(mouseX, mouseY);
             ModNetwork.CHANNEL.sendToServer(new GunConfigPacket(this.key, this.level()));
+        }
+    }
+
+    /** 发射间隔滑条：1~30 tick，显示秒（0.05 ~ 1.50）。 */
+    private class DelaySlider extends AbstractSliderButton {
+
+        DelaySlider(int x, int y, int width, int height) {
+            super(x, y, width, height, Component.empty(),
+                    (EternalDispenserGunItem.getFireDelay(GunConfigScreen.this.gun)
+                            - EternalDispenserGunItem.MIN_DELAY_TICKS)
+                            / (double) (EternalDispenserGunItem.MAX_DELAY_TICKS
+                                    - EternalDispenserGunItem.MIN_DELAY_TICKS));
+            this.updateMessage();
+        }
+
+        int ticks() {
+            return EternalDispenserGunItem.MIN_DELAY_TICKS
+                    + (int) Math.round(this.value * (EternalDispenserGunItem.MAX_DELAY_TICKS
+                            - EternalDispenserGunItem.MIN_DELAY_TICKS));
+        }
+
+        @Override
+        protected void updateMessage() {
+            this.setMessage(Component.translatable(
+                    "gui.eternal_food_mod_1789477527.dispenser_gun.delay",
+                    String.format(java.util.Locale.ROOT, "%.2f", this.ticks() / 20.0F)));
+        }
+
+        @Override
+        protected void applyValue() {
+            // 吸附到整数 tick，一格一格走
+            int ticks = this.ticks();
+            this.value = (ticks - EternalDispenserGunItem.MIN_DELAY_TICKS)
+                    / (double) (EternalDispenserGunItem.MAX_DELAY_TICKS
+                            - EternalDispenserGunItem.MIN_DELAY_TICKS);
+            this.updateMessage();
+        }
+
+        @Override
+        public void onRelease(double mouseX, double mouseY) {
+            super.onRelease(mouseX, mouseY);
+            ModNetwork.CHANNEL.sendToServer(new GunConfigPacket(
+                    EternalDispenserGunItem.CFG_DELAY, this.ticks()));
         }
     }
 }

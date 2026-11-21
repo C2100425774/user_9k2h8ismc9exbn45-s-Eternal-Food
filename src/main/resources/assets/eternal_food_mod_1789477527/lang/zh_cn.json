@@ -188,5 +188,6 @@
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.waterproof": "防水",
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.silk_touch": "精准采集",
   "itemGroup.eternal_food_mod_1789477527": "永恒原版食物",
-  "gui.eternal_food_mod_1789477527.dispenser_gun.piercing": "穿透：%s"
+  "gui.eternal_food_mod_1789477527.dispenser_gun.piercing": "穿透：%s",
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.delay": "发射间隔：1~30 tick（0.05 ~ 1.50 秒）"
 }

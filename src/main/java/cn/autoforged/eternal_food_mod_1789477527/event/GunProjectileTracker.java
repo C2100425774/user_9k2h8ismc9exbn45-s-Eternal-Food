@@ -76,6 +76,8 @@ public final class GunProjectileTracker {
             return;
         }
         for (ServerLevel level : event.getServer().getAllLevels()) {
+            // 不能在遍历 getAllEntities() 时 discard（会破坏底层 Int2ObjectLinkedOpenHashMap）
+            java.util.List<Entity> toDiscard = new java.util.ArrayList<>();
             for (Entity entity : level.getAllEntities()) {
                 // getAllEntities() 的底层数组可能包含 null（实体被移除后留下的空位）
                 if (entity == null || !entity.isAlive()
@@ -89,12 +91,15 @@ public final class GunProjectileTracker {
                 }
                 int count = entity.getPersistentData().getInt("EternalGunStuck") + 1;
                 if (count >= 2) {
-                    debug("scan discard infinite " + entity.getType() + " tick=" + entity.tickCount
-                            + " at " + entity.blockPosition());
-                    entity.discard();
+                    toDiscard.add(entity);
                 } else {
                     entity.getPersistentData().putInt("EternalGunStuck", count);
                 }
+            }
+            for (Entity entity : toDiscard) {
+                debug("scan discard infinite " + entity.getType() + " tick=" + entity.tickCount
+                        + " at " + entity.blockPosition());
+                entity.discard();
             }
         }
     }
