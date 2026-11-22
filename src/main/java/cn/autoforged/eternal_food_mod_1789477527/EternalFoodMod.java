@@ -3,6 +3,7 @@ package cn.autoforged.eternal_food_mod_1789477527;
 import cn.autoforged.eternal_food_mod_1789477527.block.ModBlocks;
 import cn.autoforged.eternal_food_mod_1789477527.block.entity.ModBlockEntities;
 import cn.autoforged.eternal_food_mod_1789477527.effect.ModEffects;
+import cn.autoforged.eternal_food_mod_1789477527.enchantment.ModEnchantments;
 import cn.autoforged.eternal_food_mod_1789477527.entity.ModEntities;
 import cn.autoforged.eternal_food_mod_1789477527.event.ModCreativeTabs;
 import cn.autoforged.eternal_food_mod_1789477527.item.ModItems;
@@ -24,6 +25,7 @@ public class EternalFoodMod {
         ModBlockEntities.register(modEventBus);
         ModItems.register(modEventBus);
         ModEffects.register(modEventBus);
+        ModEnchantments.register(modEventBus);
         ModEntities.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
         ModMenus.register(modEventBus);

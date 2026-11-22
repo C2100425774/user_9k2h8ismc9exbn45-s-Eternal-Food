@@ -205,5 +205,10 @@
   "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flight": "飞行时长：约 %s 秒",
   "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star_base": "烟火之星：颜色 %s，%s",
   "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.trail": "，踪迹",
-  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flicker": "，闪烁"
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flicker": "，闪烁",
+  "enchantment.eternal_food_mod_1789477527.powerful_recovery": "强效恢复",
+  "enchantment.eternal_food_mod_1789477527.adrenaline": "肾上腺素",
+  "enchantment.eternal_food_mod_1789477527.fitness": "强健体魄",
+  "enchantment.eternal_food_mod_1789477527.satiety": "饱食",
+  "enchantment.eternal_food_mod_1789477527.feast": "盛宴"
 }
