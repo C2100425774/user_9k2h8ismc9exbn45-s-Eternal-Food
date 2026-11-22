@@ -2,8 +2,6 @@ package cn.autoforged.eternal_food_mod_1789477527.event;
 
 import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
 import cn.autoforged.eternal_food_mod_1789477527.enchantment.ModEnchantments;
-import java.util.List;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,18 +9,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.RegistryObject;
 
 /**
- * 永恒食物附魔：
- * <ul>
- *   <li>合成永恒食物时 25% 概率随机刷出一个附魔（1~最大等级）；</li>
- *   <li>食用时按附魔等级施加对应效果（数值参考 orefood）。</li>
- * </ul>
+ * 永恒食物附魔：食用时按附魔等级施加对应效果（数值参考 orefood）。
+ * 附魔本身通过附魔台刷在永恒食物上，并可在铁砧中用两件食物融合升级。
  */
 @Mod.EventBusSubscriber(modid = EternalFoodMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class EternalFoodEnchantmentHandler {
@@ -39,33 +33,6 @@ public final class EternalFoodEnchantmentHandler {
         var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem());
         return key != null && EternalFoodMod.MOD_ID.equals(key.getNamespace())
                 && stack.getItem().getFoodProperties() != null;
-    }
-
-    @SubscribeEvent
-    public static void onCrafted(PlayerEvent.ItemCraftedEvent event) {
-        ItemStack stack = event.getCrafting();
-        if (!isEternalFood(stack) || hasAnyEnchantment(stack)) {
-            return;
-        }
-        if (event.getEntity().level().isClientSide()) {
-            return;
-        }
-        if (event.getEntity().getRandom().nextDouble() >= ROLL_CHANCE) {
-            return;
-        }
-        List<RegistryObject<Enchantment>> pool = ModEnchantments.ALL;
-        Enchantment enchantment = pool.get(event.getEntity().getRandom().nextInt(pool.size())).get();
-        int level = 1 + event.getEntity().getRandom().nextInt(enchantment.getMaxLevel());
-        stack.enchant(enchantment, level);
-    }
-
-    private static boolean hasAnyEnchantment(ItemStack stack) {
-        for (RegistryObject<Enchantment> entry : ModEnchantments.ALL) {
-            if (EnchantmentHelper.getItemEnchantmentLevel(entry.get(), stack) > 0) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @SubscribeEvent

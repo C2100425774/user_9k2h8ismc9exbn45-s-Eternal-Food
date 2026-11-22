@@ -2,6 +2,7 @@ package cn.autoforged.eternal_food_mod_1789477527.enchantment;
 
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentCategory;
 
 /**
@@ -32,13 +33,24 @@ public class EternalFoodEnchantment extends Enchantment {
         return getMinCost(level) + 20;
     }
 
-    /** 不进入附魔台 / 附魔书 / 战利品附魔池。 */
+    /** 允许出现在附魔台候选池里，但能否应用由 canApplyAtEnchantingTable 决定。 */
     @Override
     public boolean isDiscoverable() {
+        return true;
+    }
+
+    /** 只有永恒食物能在附魔台里刷出这些附魔。 */
+    @Override
+    public boolean canApplyAtEnchantingTable(ItemStack stack) {
+        return stack.getItem() instanceof cn.autoforged.eternal_food_mod_1789477527.item.EternalFoodItem;
+    }
+
+    /** 不进入附魔书，因此不会占附魔书/村民交易的权重。 */
+    @Override
+    public boolean isAllowedOnBooks() {
         return false;
     }
 
-    /** 村民不交易。 */
     @Override
     public boolean isTradeable() {
         return false;

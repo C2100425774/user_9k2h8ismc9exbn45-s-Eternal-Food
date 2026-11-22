@@ -198,6 +198,17 @@ public class EternalFoodItem extends Item {
         }
     }
 
+    /** 允许放进附魔台（食物本身没有耐久，默认不可附魔）。 */
+    @Override
+    public boolean isEnchantable(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public int getEnchantmentValue() {
+        return 15;
+    }
+
     @Override
     public int getUseDuration(ItemStack stack) {
         return useDuration;
