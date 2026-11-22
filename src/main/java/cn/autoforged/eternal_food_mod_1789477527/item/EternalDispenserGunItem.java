@@ -501,15 +501,15 @@ public class EternalDispenserGunItem extends Item {
             }
             bullet.setBulletDamage(Math.max(1,
                     (int) Math.ceil(projectileSpeed(powerLevel) * 2.0)));
+            bullet.setWaterproof(riptide);
             bullet.shoot(direction.x, direction.y, direction.z, projectileSpeed(powerLevel), uncertainty);
             if (riptide) {
                 GunProjectileTracker.markRiptide(bullet);
-                bullet.getPersistentData().putBoolean("EternalGunWaterproof", true);
             }
             level.addFreshEntity(bullet);
             return;
         }
-        Projectile projectile = createProjectile(level, player, ammo, origin, direction, silk);
+        Projectile projectile = createProjectile(level, player, ammo, origin, direction, silk, riptide);
         if (projectile == null) {
             return;
         }
@@ -541,9 +541,6 @@ public class EternalDispenserGunItem extends Item {
         }
         if (riptide) {
             GunProjectileTracker.markRiptide(projectile);
-            if (projectile instanceof AbstractArrow arrow) {
-                arrow.getPersistentData().putBoolean("EternalGunWaterproof", true);
-            }
         }
         // 力量：减少空气阻力 + 重力（火球 / 烟花这类不按普通物理飞的不处理）
         if (!(projectile instanceof AbstractHurtingProjectile)
@@ -558,7 +555,7 @@ public class EternalDispenserGunItem extends Item {
     }
 
     private static Projectile createProjectile(ServerLevel level, Player player, ItemStack ammo,
-            Vec3 origin, Vec3 direction, boolean silk) {
+            Vec3 origin, Vec3 direction, boolean silk, boolean waterproof) {
         Item item = ammo.getItem();
         RandomSource random = level.random;
 
@@ -585,19 +582,29 @@ public class EternalDispenserGunItem extends Item {
             return rocket;
         }
         if (item == Items.ARROW || item == Items.TIPPED_ARROW) {
-            Arrow arrow = new Arrow(level, origin.x, origin.y, origin.z);
+            cn.autoforged.eternal_food_mod_1789477527.entity.GunArrow arrow =
+                    new cn.autoforged.eternal_food_mod_1789477527.entity.GunArrow(
+                            level, origin.x, origin.y, origin.z);
+            arrow.setWaterproof(waterproof);
             if (item == Items.TIPPED_ARROW) {
                 arrow.setEffectsFromItem(ammo);
             }
             return arrow;
         }
         if (ammo.is(ModItems.ETERNAL_TIPPED_ARROW.get())) {
-            Arrow arrow = new Arrow(level, origin.x, origin.y, origin.z);
+            cn.autoforged.eternal_food_mod_1789477527.entity.GunArrow arrow =
+                    new cn.autoforged.eternal_food_mod_1789477527.entity.GunArrow(
+                            level, origin.x, origin.y, origin.z);
+            arrow.setWaterproof(waterproof);
             EternalTippedArrowItem.applyEffects(arrow, ammo);
             return arrow;
         }
         if (item == Items.SPECTRAL_ARROW) {
-            return new SpectralArrow(level, origin.x, origin.y, origin.z);
+            cn.autoforged.eternal_food_mod_1789477527.entity.GunSpectralArrow arrow =
+                    new cn.autoforged.eternal_food_mod_1789477527.entity.GunSpectralArrow(
+                            level, origin.x, origin.y, origin.z);
+            arrow.setWaterproof(waterproof);
+            return arrow;
         }
         if (item == Items.SNOWBALL || ammo.is(ModItems.ETERNAL_SNOWBALL.get())) {
             Snowball snowball = new Snowball(level, origin.x, origin.y, origin.z);

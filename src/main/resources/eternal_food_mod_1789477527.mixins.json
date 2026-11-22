@@ -8,8 +8,7 @@
     "BrewingStandBlockEntityMixin",
     "BrewingStandFuelSlotMixin",
     "CrossbowItemMixin",
-    "PlayerMixin",
-    "AbstractArrowWaterMixin"
+    "PlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

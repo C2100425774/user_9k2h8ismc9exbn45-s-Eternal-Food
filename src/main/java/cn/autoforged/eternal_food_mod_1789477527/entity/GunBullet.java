@@ -21,6 +21,7 @@ public class GunBullet extends Arrow {
 
     private int bulletDamage = 1;
     private boolean spectral;
+    private boolean waterproof;
 
     public GunBullet(EntityType<? extends GunBullet> type, Level level) {
         super(type, level);
@@ -29,6 +30,10 @@ public class GunBullet extends Arrow {
     public GunBullet(Level level, LivingEntity owner) {
         super(level, owner);
         this.setOwner(owner);
+    }
+
+    public void setWaterproof(boolean waterproof) {
+        this.waterproof = waterproof;
     }
 
     public void setSpectral(boolean spectral) {
@@ -43,6 +48,11 @@ public class GunBullet extends Arrow {
         if (stack.is(net.minecraft.world.item.Items.TIPPED_ARROW)) {
             this.setEffectsFromItem(stack);
         }
+    }
+
+    @Override
+    protected float getWaterInertia() {
+        return this.waterproof ? 0.99F : super.getWaterInertia();
     }
 
     @Override
