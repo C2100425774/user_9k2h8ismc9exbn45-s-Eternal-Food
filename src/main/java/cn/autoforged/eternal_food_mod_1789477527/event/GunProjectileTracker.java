@@ -49,6 +49,10 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Integer> POWER_STILL = Collections.synchronizedMap(new WeakHashMap<>());
     /** 3 级及以上的无重力飞行剩余 tick。 */
     private static final Map<Entity, Integer> FLIGHT = Collections.synchronizedMap(new WeakHashMap<>());
+    /** 发射时的朝向，用于识别原版弹开（弹开会把 yRot 翻转 180°）。 */
+    private static final Map<Entity, Float> LAUNCH_YAW = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final org.slf4j.Logger LOGGER =
+            org.slf4j.LoggerFactory.getLogger("eternal_food_gun");
 
     private GunProjectileTracker() {
     }
@@ -68,6 +72,8 @@ public final class GunProjectileTracker {
             return;
         }
         POWERED.put(entity, clamped);
+        LAUNCH_YAW.put(entity, entity.getYRot());
+        LOGGER.info("[gun] markPowered level={} entity={}", clamped, entity.getType());
         Vec3 velocity = entity.getDeltaMovement();
         if (velocity.lengthSqr() > 1.0E-6) {
             LAUNCH.put(entity, velocity.normalize());
@@ -158,6 +164,7 @@ public final class GunProjectileTracker {
                 POWERED.remove(entity);
                 LAUNCH.remove(entity);
                 FLIGHT.remove(entity);
+                LAUNCH_YAW.remove(entity);
                 continue;
             }
             if (entity.tickCount >= POWERED_MAX_TICKS) {
@@ -166,6 +173,7 @@ public final class GunProjectileTracker {
                 POWERED.remove(entity);
                 LAUNCH.remove(entity);
                 FLIGHT.remove(entity);
+                LAUNCH_YAW.remove(entity);
                 continue;
             }
             Vec3 launch = LAUNCH.get(entity);
@@ -174,15 +182,23 @@ public final class GunProjectileTracker {
             // 被弹开 = 速度方向反转（相对发射方向或上一 tick 速度），或速度骤降
             boolean deflected = (launch != null && now.dot(launch) < -0.01)
                     || (before != null && now.dot(before) < 0.0);
+            Float launchYaw = LAUNCH_YAW.get(entity);
+            if (launchYaw != null
+                    && Math.abs(net.minecraft.util.Mth.wrapDegrees(entity.getYRot() - launchYaw)) > 90.0F) {
+                // 原版弹开会把箭的朝向翻转 180°，这个信号最可靠
+                deflected = true;
+            }
             if (before != null && before.lengthSqr() > 0.01
                     && now.lengthSqr() < before.lengthSqr() * 0.25) {
                 deflected = true;
             }
             if (deflected) {
+                LOGGER.info("[gun] DEFLECT level={} entity={} now={}", POWERED.get(entity), entity.getType(), now);
                 // 不管伤害有没有打出来：立刻恢复重力并结束飞行寿命
                 entity.setNoGravity(false);
                 entity.setDeltaMovement(0.0, -0.5, 0.0);
                 FLIGHT.remove(entity);
+                LAUNCH_YAW.remove(entity);
                 POWER_STILL.remove(entity);
                 continue;
             }
@@ -205,6 +221,7 @@ public final class GunProjectileTracker {
                 if (remaining <= 0) {
                     entity.setNoGravity(false);
                     FLIGHT.remove(entity);
+                LAUNCH_YAW.remove(entity);
                 } else {
                     FLIGHT.put(entity, remaining);
                 }
