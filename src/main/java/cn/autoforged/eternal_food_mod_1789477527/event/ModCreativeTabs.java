@@ -68,8 +68,6 @@ public class ModCreativeTabs {
                             } else if (value == ModItems.ETERNAL_FIREWORK_ROCKET.get()) {
                                 output.accept(fireworkRocket());
                                 output.accept(fireworkMissile());
-                            } else if (value == ModItems.ETERNAL_FIREWORK_MISSILE.get()) {
-                                // 导弹在永恒烟花火箭旁边输出，这里跳过
                             } else if (value == ModItems.ETERNAL_SPAWN_EGG.get()) {
                                 // 创造模式页签中的两个永恒刷怪蛋：闪电束（苦力怕配色）与
                                 // 唤魔者尖牙（唤魔者配色）。物品名均为「永恒刷怪蛋」，描述里写明生成的生物。
@@ -189,7 +187,7 @@ public class ModCreativeTabs {
 
     /** 永恒烟花火箭导弹：一个红色大型球状星，飞行 3。 */
     private static ItemStack fireworkMissile() {
-        ItemStack stack = new ItemStack(ModItems.ETERNAL_FIREWORK_MISSILE.get());
+        ItemStack stack = new ItemStack(ModItems.ETERNAL_FIREWORK_ROCKET.get());
         net.minecraft.nbt.CompoundTag fireworks = stack.getOrCreateTagElement("Fireworks");
         fireworks.putByte("Flight", (byte) 3);
         net.minecraft.nbt.ListTag explosions = new net.minecraft.nbt.ListTag();
@@ -201,6 +199,13 @@ public class ModCreativeTabs {
             explosions.add(explosion.copy());
         }
         fireworks.put("Explosions", explosions);
+        net.minecraft.nbt.CompoundTag tag = stack.getOrCreateTag();
+        tag.putBoolean("EternalMissile", true);
+        tag.putByte("HideFlags", (byte) 32);
+        tag.putString("display.Name", net.minecraft.network.chat.Component.Serializer.toJson(
+                net.minecraft.network.chat.Component.translatable(
+                        "item.eternal_food_mod_1789477527.eternal_firework_missile")
+                        .withStyle(net.minecraft.ChatFormatting.RED)));
         return stack;
     }
 

@@ -77,13 +77,13 @@ public class EternalFireworkRocketItem extends FireworkRocketItem {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        if (stack.hasTag() && stack.getTag().getBoolean("EternalSpecial")) {
-            // 创造页签里的特殊版：隐藏原版烟花描述，只显示特性
+        if (stack.hasTag() && stack.getTag().getBoolean("EternalMissile")) {
+            // 导弹版：同一个物品，隐藏原版烟花描述，只显示导弹特性
             tooltip.add(Component.translatable(
-                    "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.damage")
+                    "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.damage")
                     .withStyle(ChatFormatting.RED));
             tooltip.add(Component.translatable(
-                    "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.no_block_damage")
+                    "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star")
                     .withStyle(ChatFormatting.GRAY));
             tooltip.add(Component.translatable(
                     "tooltip.eternal_food_mod_1789477527.eternal_use")

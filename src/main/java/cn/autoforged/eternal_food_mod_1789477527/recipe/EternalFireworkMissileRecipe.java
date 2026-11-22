@@ -68,6 +68,12 @@ public class EternalFireworkMissileRecipe extends ShapelessRecipe {
         CompoundTag tag = result.getOrCreateTag();
         tag.put("Fireworks", fireworks);
         tag.putBoolean("EternalMissile", true);
+        tag.putByte("HideFlags", (byte) 32);
+        // 自定义名字「永恒烟花火箭导弹」仍用同一个物品
+        tag.putString("display.Name", net.minecraft.network.chat.Component.Serializer.toJson(
+                net.minecraft.network.chat.Component.translatable(
+                        "item.eternal_food_mod_1789477527.eternal_firework_missile")
+                        .withStyle(net.minecraft.ChatFormatting.RED)));
         return result;
     }
 
