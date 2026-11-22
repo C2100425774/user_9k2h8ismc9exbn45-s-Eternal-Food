@@ -36,23 +36,56 @@ public final class EternalFoodEnchantmentHandler {
                 && stack.getItem().getFoodProperties() != null;
     }
 
-    /** 附魔食物在物品提示里显示每个附魔的作用。 */
+    /** 附魔食物在物品提示里显示实际 buff / 附魔效果。 */
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
         if (!isEternalFood(stack)) {
             return;
         }
-        for (var entry : ModEnchantments.ALL) {
-            Enchantment enchantment = entry.get();
-            int level = EnchantmentHelper.getItemEnchantmentLevel(enchantment, stack);
-            if (level <= 0) {
-                continue;
-            }
-            event.getToolTip().add(net.minecraft.network.chat.Component.translatable(
-                    enchantment.getDescriptionId() + ".desc")
+        var tooltip = event.getToolTip();
+        int recovery = level(stack, ModEnchantments.POWERFUL_RECOVERY);
+        if (recovery > 0) {
+            int amplifier = Math.max(0, recovery - 1);
+            addEffectLine(tooltip, MobEffects.HEAL, 1, amplifier);
+            addEffectLine(tooltip, MobEffects.REGENERATION, recovery * 100, amplifier);
+        }
+        int adrenaline = level(stack, ModEnchantments.ADRENALINE);
+        if (adrenaline > 0) {
+            int amplifier = Math.max(0, adrenaline - 1);
+            addEffectLine(tooltip, MobEffects.DAMAGE_BOOST, adrenaline * 100, amplifier);
+            addEffectLine(tooltip, MobEffects.MOVEMENT_SPEED, adrenaline * 200, amplifier);
+        }
+        int fitness = level(stack, ModEnchantments.FITNESS);
+        if (fitness > 0) {
+            addEffectLine(tooltip, MobEffects.ABSORPTION, fitness * 400, 1);
+            addEffectLine(tooltip, MobEffects.DAMAGE_RESISTANCE, fitness * 400, Math.max(0, fitness - 1));
+        }
+        int feast = level(stack, ModEnchantments.FEAST);
+        if (feast > 0) {
+            addEffectLine(tooltip, MobEffects.SATURATION, feast * 20 * 60, 0);
+        }
+        // 饱食不给 buff，只写附魔效果
+        if (level(stack, ModEnchantments.SATIETY) > 0) {
+            tooltip.add(net.minecraft.network.chat.Component.translatable(
+                    ModEnchantments.SATIETY.get().getDescriptionId() + ".desc")
                     .withStyle(net.minecraft.ChatFormatting.GRAY));
         }
+    }
+
+    private static void addEffectLine(java.util.List<net.minecraft.network.chat.Component> tooltip,
+            net.minecraft.world.effect.MobEffect effect, int duration, int amplifier) {
+        MobEffectInstance instance = new MobEffectInstance(effect, duration, amplifier);
+        net.minecraft.network.chat.MutableComponent line = effect.getDisplayName().copy();
+        if (amplifier > 0) {
+            line.append(" ").append(net.minecraft.network.chat.Component.translatable(
+                    "enchantment.level." + (amplifier + 1)));
+        }
+        if (duration > 1) {
+            line.append(" (").append(net.minecraft.world.effect.MobEffectUtil.formatDuration(instance, 1.0F))
+                    .append(")");
+        }
+        tooltip.add(line.withStyle(net.minecraft.ChatFormatting.BLUE));
     }
 
     @SubscribeEvent
