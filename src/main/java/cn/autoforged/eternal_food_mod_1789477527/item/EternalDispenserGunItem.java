@@ -370,15 +370,6 @@ public class EternalDispenserGunItem extends Item {
         boolean silk = getToggle(gun, CFG_SILK);
         float uncertainty = silk ? 0.0F : 6.0F;
 
-        List<Vec3> directions = new ArrayList<>(3);
-        if (multishot) {
-            directions.add(rotateY(look, -10.0));
-            directions.add(look);
-            directions.add(rotateY(look, 10.0));
-        } else {
-            directions.add(look);
-        }
-
         boolean spawnEgg = !infinity && single.getItem() instanceof SpawnEggItem;
         // 开了「无限」时，末影珍珠只能当一般物品发射，避免连发传送暴毙
         boolean enderPearl = single.is(Items.ENDER_PEARL)
@@ -386,6 +377,17 @@ public class EternalDispenserGunItem extends Item {
         boolean projectileAmmo = spawnEgg
                 || (isProjectileAmmo(single) && !(infinity && enderPearl));
         boolean eternalAmmo = isEternalItem(single);
+
+        // 多重射击只对真正的弹射物生效；物品发射（GunProjectile）不能被复制，
+        // 否则会「一份物品射出三份掉落物」导致刷物品。
+        List<Vec3> directions = new ArrayList<>(3);
+        if (multishot && projectileAmmo && !spawnEgg) {
+            directions.add(rotateY(look, -10.0));
+            directions.add(look);
+            directions.add(rotateY(look, 10.0));
+        } else {
+            directions.add(look);
+        }
 
         for (int i = 0; i < directions.size(); i++) {
             Vec3 direction = directions.get(i);
