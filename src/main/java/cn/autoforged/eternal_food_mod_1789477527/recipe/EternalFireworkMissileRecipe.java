@@ -10,6 +10,7 @@ import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.world.level.Level;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -31,6 +32,19 @@ public class EternalFireworkMissileRecipe extends ShapelessRecipe {
     }
 
     @Override
+    public boolean matches(CraftingContainer container, Level level) {
+        if (!super.matches(container, level)) {
+            return false;
+        }
+        ItemStack source = findFireworkSource(container);
+        if (source == null || source.getTag() == null) {
+            return false;
+        }
+        CompoundTag fireworks = source.getTagElement("Fireworks");
+        return fireworks != null && !fireworks.getList("Explosions", Tag.TAG_COMPOUND).isEmpty();
+    }
+
+    @Override
     public ItemStack assemble(CraftingContainer container, RegistryAccess registryAccess) {
         ItemStack result = super.assemble(container, registryAccess);
         ItemStack source = findFireworkSource(container);
@@ -44,17 +58,13 @@ public class EternalFireworkMissileRecipe extends ShapelessRecipe {
         CompoundTag fireworks = new CompoundTag();
         fireworks.putByte("Flight", sourceFireworks.getByte("Flight"));
         ListTag explosions = sourceFireworks.getList("Explosions", Tag.TAG_COMPOUND);
-        ListTag single = new ListTag();
-        if (!explosions.isEmpty()) {
-            single.add(explosions.getCompound(0).copy());
-        } else {
-            // 来源烟花没有星时给一个默认红色大型球状星，保证导弹有爆炸
-            CompoundTag fallback = new CompoundTag();
-            fallback.putByte("Type", (byte) 4);
-            fallback.putIntArray("Colors", new int[]{16711680});
-            single.add(fallback);
+        // 只继承第一颗星，复制 8 份：原版伤害 = 5 + 2×8 = 21
+        CompoundTag star = explosions.getCompound(0).copy();
+        ListTag eight = new ListTag();
+        for (int i = 0; i < 8; i++) {
+            eight.add(star.copy());
         }
-        fireworks.put("Explosions", single);
+        fireworks.put("Explosions", eight);
         CompoundTag tag = result.getOrCreateTag();
         tag.put("Fireworks", fireworks);
         tag.putBoolean("EternalMissile", true);

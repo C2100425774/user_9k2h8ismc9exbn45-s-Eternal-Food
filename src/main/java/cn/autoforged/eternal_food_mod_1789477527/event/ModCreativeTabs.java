@@ -197,9 +197,10 @@ public class ModCreativeTabs {
         explosion.putByte("Type", (byte) 4);
         explosion.putBoolean("Trail", true);
         explosion.putIntArray("Colors", new int[]{16711680});
-        explosions.add(explosion);
+        for (int i = 0; i < 8; i++) {
+            explosions.add(explosion.copy());
+        }
         fireworks.put("Explosions", explosions);
-        stack.getOrCreateTag().putBoolean("EternalMissile", true);
         return stack;
     }
 
