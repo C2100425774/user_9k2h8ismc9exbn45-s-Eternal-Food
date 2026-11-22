@@ -38,12 +38,9 @@ public final class GunProjectileTracker {
     private static final Set<Entity> INFINITE = Collections.synchronizedSet(
             Collections.newSetFromMap(new WeakHashMap<>()));
     private static final Map<Entity, Integer> STUCK_TICKS = Collections.synchronizedMap(new WeakHashMap<>());
-    private static final Set<Entity> RIPTIDE = Collections.synchronizedSet(
-            Collections.newSetFromMap(new WeakHashMap<>()));
     private static final Map<Entity, Integer> POWERED = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAUNCH = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
-    private static final Map<Entity, Vec3> RIPTIDE_PRE = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAST_POS = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Integer> POWER_STILL = Collections.synchronizedMap(new WeakHashMap<>());
 
@@ -53,10 +50,6 @@ public final class GunProjectileTracker {
     public static void markInfinite(Entity entity) {
         INFINITE.add(entity);
         entity.getPersistentData().putBoolean("EternalGunInfinite", true);
-    }
-
-    public static void markRiptide(Entity entity) {
-        RIPTIDE.add(entity);
     }
 
     public static void markPowered(Entity entity, int level) {
@@ -84,12 +77,6 @@ public final class GunProjectileTracker {
                 PRE_TICK.put(entity, entity.getDeltaMovement());
                 if (entity.tickCount >= POWERED_MAX_TICKS) {
                     entity.discard();
-                }
-            }
-            for (Entity entity : new ArrayList<>(RIPTIDE)) {
-                if (entity.isAlive() && entity.level() == level && entity.isInWater()
-                        && !RIPTIDE_PRE.containsKey(entity)) {
-                    RIPTIDE_PRE.put(entity, entity.getDeltaMovement());
                 }
             }
             return;
@@ -158,21 +145,10 @@ public final class GunProjectileTracker {
                 POWER_STILL.remove(entity);
             }
         }
-        for (Entity entity : new ArrayList<>(RIPTIDE)) {
-            Vec3 before = RIPTIDE_PRE.remove(entity);
-            if (!entity.isAlive() || entity.level() != level) {
-                continue;
-            }
-            if (before != null && entity.isInWater()) {
-                // 参考三叉戟：水中几乎不损失速度
-                entity.setDeltaMovement(before);
-            }
-        }
     }
 
     private static void cleanup(Entity entity) {
         PRE_TICK.remove(entity);
-        RIPTIDE_PRE.remove(entity);
         POWERED.remove(entity);
         LAUNCH.remove(entity);
         POWER_STILL.remove(entity);

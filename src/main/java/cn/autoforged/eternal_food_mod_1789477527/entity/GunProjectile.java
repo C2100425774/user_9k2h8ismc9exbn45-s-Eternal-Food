@@ -34,7 +34,6 @@ public class GunProjectile extends ThrowableItemProjectile {
     private static final EntityDataAccessor<Integer> DATA_MODE =
             SynchedEntityData.defineId(GunProjectile.class, EntityDataSerializers.INT);
 
-    private boolean riptide;
 
     public GunProjectile(EntityType<? extends GunProjectile> type, Level level) {
         super(type, level);
@@ -59,10 +58,6 @@ public class GunProjectile extends ThrowableItemProjectile {
         return this.entityData.get(DATA_MODE);
     }
 
-    public void setRiptide(boolean riptide) {
-        this.riptide = riptide;
-    }
-
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
@@ -73,23 +68,17 @@ public class GunProjectile extends ThrowableItemProjectile {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("GunMode", this.getMode());
-        tag.putBoolean("GunRiptide", this.riptide);
     }
 
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         this.setMode(tag.getInt("GunMode"));
-        this.riptide = tag.getBoolean("GunRiptide");
     }
 
     @Override
     public void tick() {
-        Vec3 before = this.getDeltaMovement();
         super.tick();
-        if (this.riptide && this.isInWater()) {
-            this.setDeltaMovement(before);
-        }
         if (this.tickCount > GunProjectileTracker.POWERED_MAX_TICKS) {
             this.discard();
         }

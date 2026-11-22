@@ -163,7 +163,6 @@ public class EternalDispenserGunItem extends Item {
     public static final String CFG_FLAME = "CfgFlame";
     public static final String CFG_MULTISHOT = "CfgMultishot";
     public static final String CFG_PIERCING = "CfgPiercing";
-    public static final String CFG_WATERPROOF = "CfgWaterproof";
     public static final String CFG_SILK = "CfgSilkTouch";
     public static final String CFG_POWER = "CfgPower";
     /** 力量上限 3 级。 */
@@ -173,7 +172,7 @@ public class EternalDispenserGunItem extends Item {
 
     /** 閰嶇疆鐣岄潰閲岀殑寮€鍏虫寜閽紙椤哄簭鍗崇晫闈㈤『搴忥級銆?*/
     public static final List<String> TOGGLE_KEYS = List.of(
-            CFG_INFINITY, CFG_FLAME, CFG_MULTISHOT, CFG_WATERPROOF, CFG_SILK);
+            CFG_INFINITY, CFG_FLAME, CFG_MULTISHOT, CFG_SILK);
 
     @Override
     public boolean isEnchantable(ItemStack stack) {
@@ -245,7 +244,6 @@ public class EternalDispenserGunItem extends Item {
             case CFG_FLAME -> "flame";
             case CFG_MULTISHOT -> "multishot";
             case CFG_PIERCING -> "piercing";
-            case CFG_WATERPROOF -> "waterproof";
             case CFG_SILK -> "silk_touch";
             default -> "unknown";
         };
@@ -368,7 +366,6 @@ public class EternalDispenserGunItem extends Item {
         // 3 级是「子弹」：不穿透，命中敌人直接消失（穿透滑块在 3 级时暂时无效）
         int piercing = powerLevel >= 3 ? 0 : getPiercing(gun);
         boolean multishot = getToggle(gun, CFG_MULTISHOT);
-        boolean waterproof = getToggle(gun, CFG_WATERPROOF);
         // 
         boolean silk = getToggle(gun, CFG_SILK);
         float uncertainty = silk ? 0.0F : 6.0F;
@@ -395,10 +392,10 @@ public class EternalDispenserGunItem extends Item {
             boolean sideArrow = directions.size() > 1 && i != 1;
             if (projectileAmmo) {
                 spawnProjectileAmmo(level, player, single.copy(), origin, direction,
-                        powerLevel, flame, piercing, infinity, waterproof, uncertainty, silk, sideArrow);
+                        powerLevel, flame, piercing, infinity, uncertainty, silk, sideArrow);
             } else {
                 spawnItemAmmo(level, player, single.copy(), origin, direction,
-                        powerLevel, waterproof, uncertainty);
+                        powerLevel, uncertainty);
             }
         }
 
@@ -452,10 +449,9 @@ public class EternalDispenserGunItem extends Item {
 
     /** 鍒锋€泲璧?{@link GunProjectile}锛屽懡涓椂鐢熸垚鐢熺墿锛涘叾浠栭潪鎶曟幏鐗╄蛋鐗╁搧妯″紡銆?*/
     private static void spawnItemAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
-            Vec3 direction, int powerLevel, boolean riptide, float uncertainty) {
+            Vec3 direction, int powerLevel, float uncertainty) {
         GunProjectile projectile = new GunProjectile(level, origin.x, origin.y, origin.z, ammo);
         projectile.setMode(GunProjectile.MODE_ITEM);
-        projectile.setRiptide(riptide);
         projectile.setOwner(player);
         // 鍔涢噺 V锛氬儚鐏悆涓€鏍锋部鍑嗘槦鐩寸嚎椋烇紝鍘绘帀鍙戝皠鍣ㄥ師鏈夌殑 +0.1 鎶崌
         double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
@@ -477,12 +473,11 @@ public class EternalDispenserGunItem extends Item {
 
     private static void spawnProjectileAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
             Vec3 direction, int powerLevel, boolean flame, int piercing, boolean infinity,
-            boolean riptide, float uncertainty, boolean silk, boolean sideArrow) {
+            float uncertainty, boolean silk, boolean sideArrow) {
         if (ammo.getItem() instanceof SpawnEggItem) {
             GunProjectile projectile = new GunProjectile(level, origin.x, origin.y, origin.z, ammo);
             projectile.setMode(GunProjectile.MODE_SPAWN_EGG);
-            projectile.setRiptide(riptide);
-                projectile.setOwner(player);
+                    projectile.setOwner(player);
             double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
             projectile.shoot(direction.x, vy, direction.z, projectileSpeed(powerLevel), uncertainty);
             level.addFreshEntity(projectile);
@@ -501,15 +496,12 @@ public class EternalDispenserGunItem extends Item {
             }
             bullet.setBulletDamage(Math.max(1,
                     (int) Math.ceil(projectileSpeed(powerLevel) * 2.0)));
-            bullet.setWaterproof(riptide);
+            bullet.pickup = AbstractArrow.Pickup.DISALLOWED;
             bullet.shoot(direction.x, direction.y, direction.z, projectileSpeed(powerLevel), uncertainty);
-            if (riptide) {
-                GunProjectileTracker.markRiptide(bullet);
-            }
             level.addFreshEntity(bullet);
             return;
         }
-        Projectile projectile = createProjectile(level, player, ammo, origin, direction, silk, riptide);
+        Projectile projectile = createProjectile(level, player, ammo, origin, direction, silk);
         if (projectile == null) {
             return;
         }
@@ -539,9 +531,6 @@ public class EternalDispenserGunItem extends Item {
             arrow.pickup = unpickable ? AbstractArrow.Pickup.CREATIVE_ONLY
                     : AbstractArrow.Pickup.ALLOWED;
         }
-        if (riptide) {
-            GunProjectileTracker.markRiptide(projectile);
-        }
         // 力量：减少空气阻力 + 重力（火球 / 烟花这类不按普通物理飞的不处理）
         if (!(projectile instanceof AbstractHurtingProjectile)
                 && !(projectile instanceof FireworkRocketEntity)) {
@@ -555,7 +544,7 @@ public class EternalDispenserGunItem extends Item {
     }
 
     private static Projectile createProjectile(ServerLevel level, Player player, ItemStack ammo,
-            Vec3 origin, Vec3 direction, boolean silk, boolean waterproof) {
+            Vec3 origin, Vec3 direction, boolean silk) {
         Item item = ammo.getItem();
         RandomSource random = level.random;
 
@@ -582,28 +571,25 @@ public class EternalDispenserGunItem extends Item {
             return rocket;
         }
         if (item == Items.ARROW || item == Items.TIPPED_ARROW) {
-            cn.autoforged.eternal_food_mod_1789477527.entity.GunArrow arrow =
-                    new cn.autoforged.eternal_food_mod_1789477527.entity.GunArrow(
+            Arrow arrow =
+                    new Arrow(
                             level, origin.x, origin.y, origin.z);
-            arrow.setWaterproof(waterproof);
             if (item == Items.TIPPED_ARROW) {
                 arrow.setEffectsFromItem(ammo);
             }
             return arrow;
         }
         if (ammo.is(ModItems.ETERNAL_TIPPED_ARROW.get())) {
-            cn.autoforged.eternal_food_mod_1789477527.entity.GunArrow arrow =
-                    new cn.autoforged.eternal_food_mod_1789477527.entity.GunArrow(
+            Arrow arrow =
+                    new Arrow(
                             level, origin.x, origin.y, origin.z);
-            arrow.setWaterproof(waterproof);
             EternalTippedArrowItem.applyEffects(arrow, ammo);
             return arrow;
         }
         if (item == Items.SPECTRAL_ARROW) {
-            cn.autoforged.eternal_food_mod_1789477527.entity.GunSpectralArrow arrow =
-                    new cn.autoforged.eternal_food_mod_1789477527.entity.GunSpectralArrow(
+            SpectralArrow arrow =
+                    new SpectralArrow(
                             level, origin.x, origin.y, origin.z);
-            arrow.setWaterproof(waterproof);
             return arrow;
         }
         if (item == Items.SNOWBALL || ammo.is(ModItems.ETERNAL_SNOWBALL.get())) {
@@ -751,9 +737,6 @@ public class EternalDispenserGunItem extends Item {
             lines.add(Component.translatable(
                     "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.piercing", piercing)
                     .withStyle(ChatFormatting.GRAY));
-        }
-        if (getToggle(gun, CFG_WATERPROOF)) {
-            lines.add(effectLine("waterproof"));
         }
         if (getToggle(gun, CFG_SILK)) {
             lines.add(effectLine("silk_touch"));
