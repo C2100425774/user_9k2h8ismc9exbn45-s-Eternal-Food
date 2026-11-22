@@ -190,5 +190,7 @@
   "gui.eternal_food_mod_1789477527.dispenser_gun.piercing": "穿透：%s",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.delay": "发射间隔：1~30 tick（0.05 ~ 1.50 秒）",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.level3_warning": "3 级：非原版箭会丢失特殊效果",
-  "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.power_bullet": "力量 3：子弹不穿透，命中一个敌人即消失"
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.power_bullet": "力量 3：子弹不穿透，命中一个敌人即消失",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.damage": "特性：爆炸伤害 33（14 个大型球状烟火之星）",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.no_block_damage": "烟花不会破坏方块"
 }

@@ -77,7 +77,19 @@ public class EternalFireworkRocketItem extends FireworkRocketItem {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        // 原版会列出飞行时间与爆炸效果，永恒版本照常继承显示。
+        if (stack.hasTag() && stack.getTag().getBoolean("EternalSpecial")) {
+            // 创造页签里的特殊版：隐藏原版烟花描述，只显示特性
+            tooltip.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.damage")
+                    .withStyle(ChatFormatting.RED));
+            tooltip.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.no_block_damage")
+                    .withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.eternal_use")
+                    .withStyle(ChatFormatting.GOLD));
+            return;
+        }
         super.appendHoverText(stack, level, tooltip, flag);
         tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.eternal_use")
                 .withStyle(ChatFormatting.GOLD));

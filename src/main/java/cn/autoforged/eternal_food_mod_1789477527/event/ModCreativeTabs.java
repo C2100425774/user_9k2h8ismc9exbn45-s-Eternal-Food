@@ -180,7 +180,20 @@ public class ModCreativeTabs {
      */
     private static ItemStack fireworkRocket() {
         ItemStack stack = new ItemStack(ModItems.ETERNAL_FIREWORK_ROCKET.get());
-        stack.getOrCreateTagElement("Fireworks").putByte("Flight", (byte) 3);
+        net.minecraft.nbt.CompoundTag fireworks = stack.getOrCreateTagElement("Fireworks");
+        fireworks.putByte("Flight", (byte) 2);
+        net.minecraft.nbt.ListTag explosions = new net.minecraft.nbt.ListTag();
+        for (int i = 0; i < 14; i++) {
+            net.minecraft.nbt.CompoundTag explosion = new net.minecraft.nbt.CompoundTag();
+            explosion.putByte("Type", (byte) 4);
+            explosion.putBoolean("Trail", true);
+            explosion.putIntArray("Colors", new int[]{16711680});
+            explosions.add(explosion);
+        }
+        fireworks.put("Explosions", explosions);
+        net.minecraft.nbt.CompoundTag tag = stack.getOrCreateTag();
+        tag.putByte("HideFlags", (byte) 32);
+        tag.putBoolean("EternalSpecial", true);
         return stack;
     }
 

@@ -190,5 +190,7 @@
   "gui.eternal_food_mod_1789477527.dispenser_gun.piercing": "Piercing: %s",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.delay": "Fire interval: 1~30 ticks (0.05 ~ 1.50 s)",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.level3_warning": "Level 3: modded arrows lose their effects",
-  "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.power_bullet": "Power 3: bullet does not pierce, vanishes after one enemy"
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.power_bullet": "Power 3: bullet does not pierce, vanishes after one enemy",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.damage": "Special: explosion damage 33 (14 large ball stars)",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.no_block_damage": "Firework does not break blocks"
 }
