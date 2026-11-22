@@ -455,7 +455,6 @@ public class EternalDispenserGunItem extends Item {
             Vec3 direction, int powerLevel, boolean riptide, float uncertainty) {
         GunProjectile projectile = new GunProjectile(level, origin.x, origin.y, origin.z, ammo);
         projectile.setMode(GunProjectile.MODE_ITEM);
-        projectile.setPowerLevel(powerLevel);
         projectile.setRiptide(riptide);
         projectile.setOwner(player);
         // 鍔涢噺 V锛氬儚鐏悆涓€鏍锋部鍑嗘槦鐩寸嚎椋烇紝鍘绘帀鍙戝皠鍣ㄥ師鏈夌殑 +0.1 鎶崌
@@ -482,10 +481,8 @@ public class EternalDispenserGunItem extends Item {
         if (ammo.getItem() instanceof SpawnEggItem) {
             GunProjectile projectile = new GunProjectile(level, origin.x, origin.y, origin.z, ammo);
             projectile.setMode(GunProjectile.MODE_SPAWN_EGG);
-            projectile.setInfinite(false);
             projectile.setRiptide(riptide);
-            projectile.setPowerLevel(powerLevel);
-            projectile.setOwner(player);
+                projectile.setOwner(player);
             double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
             projectile.shoot(direction.x, vy, direction.z, projectileSpeed(powerLevel), uncertainty);
             level.addFreshEntity(projectile);

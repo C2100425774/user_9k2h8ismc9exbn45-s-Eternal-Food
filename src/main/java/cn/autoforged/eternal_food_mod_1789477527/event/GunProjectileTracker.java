@@ -8,14 +8,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -48,7 +43,6 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Integer> POWERED = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAUNCH = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
-    private static final Map<Entity, Vec3> PRE_POS = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAST_POS = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Integer> POWER_STILL = Collections.synchronizedMap(new WeakHashMap<>());
 
@@ -87,7 +81,6 @@ public final class GunProjectileTracker {
                     continue;
                 }
                 PRE_TICK.put(entity, entity.getDeltaMovement());
-                PRE_POS.put(entity, entity.position());
                 if (entity.tickCount >= POWERED_MAX_TICKS) {
                     entity.discard();
                 }
@@ -138,12 +131,6 @@ public final class GunProjectileTracker {
                 cleanup(entity);
                 continue;
             }
-            if (POWERED.get(entity) >= 3 && entity instanceof AbstractArrow arrow) {
-                if (handleBullet(arrow, level)) {
-                    cleanup(entity);
-                }
-                continue;
-            }
             Vec3 launch = LAUNCH.get(entity);
             Vec3 now = entity.getDeltaMovement();
             Vec3 before = PRE_TICK.remove(entity);
@@ -181,42 +168,8 @@ public final class GunProjectileTracker {
         }
     }
 
-    /**
-     * 3 级子弹的命中处理：扫掠检测方块和生物，命中生物时无视无敌帧手动造成伤害后消失。
-     * @return true 表示子弹已消失，需要清理记录
-     */
-    private static boolean handleBullet(AbstractArrow arrow, ServerLevel level) {
-        Vec3 current = arrow.position();
-        Vec3 previous = PRE_POS.getOrDefault(arrow, current);
-        if (previous.distanceToSqr(current) > 1.0E-8) {
-            BlockHitResult blockHit = level.clip(new ClipContext(previous, current,
-                    ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, arrow));
-            if (blockHit.getType() != HitResult.Type.MISS) {
-                arrow.discard();
-                return true;
-            }
-        }
-        AABB swept = arrow.getBoundingBox()
-                .expandTowards(current.subtract(previous))
-                .inflate(0.3);
-        Entity owner = arrow.getOwner();
-        List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, swept,
-                living -> living.isAlive() && living != owner);
-        if (targets.isEmpty()) {
-            return false;
-        }
-        LivingEntity target = targets.get(0);
-        target.invulnerableTime = 0;
-        int damage = Math.max(1, (int) Math.ceil(arrow.getDeltaMovement().length() * 2.0));
-        DamageSource source = level.damageSources().arrow(arrow, owner);
-        target.hurt(source, damage);
-        arrow.discard();
-        return true;
-    }
-
     private static void cleanup(Entity entity) {
         PRE_TICK.remove(entity);
-        PRE_POS.remove(entity);
         POWERED.remove(entity);
         LAUNCH.remove(entity);
         POWER_STILL.remove(entity);

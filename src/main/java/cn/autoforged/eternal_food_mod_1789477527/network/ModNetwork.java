@@ -47,10 +47,6 @@ public final class ModNetwork {
                 ClockTimePacket::encode,
                 ClockTimePacket::decode,
                 ClockTimePacket::handle);
-        CHANNEL.registerMessage(id++, GunSetDelayPacket.class,
-                GunSetDelayPacket::encode,
-                GunSetDelayPacket::decode,
-                GunSetDelayPacket::handle);
         CHANNEL.registerMessage(id++, GunFirePacket.class,
                 GunFirePacket::encode,
                 GunFirePacket::decode,

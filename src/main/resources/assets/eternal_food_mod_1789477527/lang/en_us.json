@@ -178,7 +178,6 @@
   "gui.eternal_food_mod_1789477527.dispenser_gun.default": "Default",
   "gui.eternal_food_mod_1789477527.dispenser_gun.config": "Dispenser Gun Config",
   "gui.eternal_food_mod_1789477527.dispenser_gun.config_hint": "Click a button to toggle; green = on, red = off",
-  "gui.eternal_food_mod_1789477527.dispenser_gun.done": "Done",
   "gui.eternal_food_mod_1789477527.dispenser_gun.power": "Power: %s",
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.infinity": "Infinity",
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.power": "Power",

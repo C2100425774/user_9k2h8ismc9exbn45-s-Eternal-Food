@@ -106,6 +106,8 @@ tasks.named('jar', Jar).configure {
     // 不带中文、不带方括号 —— CurseForge / MC百科 对文件名有要求。
     // 注意：这里只影响 jar 文件名，modId / 注册名始终是 eternal_food_mod_1789477527，不会变。
     archiveFileName = "${archive_base}-${mod_version}.jar"
+    // datagen 只在开发期运行，不打进发布 jar
+    exclude '**/datagen/**'
     manifest {
         attributes([
             'Specification-Title'    : mod_id,
@@ -119,7 +121,6 @@ tasks.named('jar', Jar).configure {
         ] as Map<String, Object>)
     }
     // 把 Java 源码一并打进 jar，保证发布物始终可审计、可回溯
-    from sourceSets.main.java
 }
 
 tasks.named('processResources', ProcessResources).configure {

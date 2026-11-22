@@ -1,14 +1,11 @@
 package cn.autoforged.eternal_food_mod_1789477527.menu;
 
-import cn.autoforged.eternal_food_mod_1789477527.item.EternalDispenserGunItem;
 import cn.autoforged.eternal_food_mod_1789477527.item.GunContainer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerData;
-import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -17,14 +14,11 @@ public class EternalDispenserGunMenu extends AbstractContainerMenu {
 
     private final GunContainer container;
     private final ItemStack gun;
-    private final ContainerData data;
 
     public EternalDispenserGunMenu(int id, Inventory inventory, InteractionHand hand) {
         super(ModMenus.GUN.get(), id);
         this.gun = inventory.player.getItemInHand(hand);
         this.container = new GunContainer(this.gun);
-        this.data = new SimpleContainerData(1);
-        this.data.set(0, EternalDispenserGunItem.getFireDelay(this.gun));
 
         // 3×3 弹仓（与原版发射器同坐标）
         for (int i = 0; i < 9; i++) {
@@ -40,21 +34,6 @@ public class EternalDispenserGunMenu extends AbstractContainerMenu {
         for (int col = 0; col < 9; col++) {
             this.addSlot(new Slot(inventory, col, 8 + col * 18, 142));
         }
-        this.addDataSlots(this.data);
-    }
-
-    /** 客户端滑条 → 服务端（通过 {@code GunSetDelayPacket} 调用）。 */
-    public void applyDelay(int ticks) {
-        int clamped = Math.max(EternalDispenserGunItem.MIN_DELAY_TICKS,
-                Math.min(EternalDispenserGunItem.MAX_DELAY_TICKS, ticks));
-        this.data.set(0, clamped);
-        if (!this.gun.isEmpty()) {
-            EternalDispenserGunItem.setFireDelay(this.gun, clamped);
-        }
-    }
-
-    public int getFireDelay() {
-        return this.data.get(0);
     }
 
     /** 界面里显示用的枪物品栈（客户端用它画「无限附魔 → 第 1 格金色」提示）。 */

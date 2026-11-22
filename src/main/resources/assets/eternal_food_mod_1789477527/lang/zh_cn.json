@@ -178,7 +178,6 @@
   "gui.eternal_food_mod_1789477527.dispenser_gun.default": "默认",
   "gui.eternal_food_mod_1789477527.dispenser_gun.config": "发射器枪配置",
   "gui.eternal_food_mod_1789477527.dispenser_gun.config_hint": "点击按钮切换效果；绿色 = 开启，红色 = 关闭",
-  "gui.eternal_food_mod_1789477527.dispenser_gun.done": "完成",
   "gui.eternal_food_mod_1789477527.dispenser_gun.power": "力量：%s",
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.infinity": "无限发射",
   "gui.eternal_food_mod_1789477527.dispenser_gun.option.power": "力量",
