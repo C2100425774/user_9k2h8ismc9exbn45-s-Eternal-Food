@@ -47,6 +47,12 @@ public class EternalFireworkMissileRecipe extends ShapelessRecipe {
         ListTag single = new ListTag();
         if (!explosions.isEmpty()) {
             single.add(explosions.getCompound(0).copy());
+        } else {
+            // 来源烟花没有星时给一个默认红色大型球状星，保证导弹有爆炸
+            CompoundTag fallback = new CompoundTag();
+            fallback.putByte("Type", (byte) 4);
+            fallback.putIntArray("Colors", new int[]{16711680});
+            single.add(fallback);
         }
         fireworks.put("Explosions", single);
         CompoundTag tag = result.getOrCreateTag();
