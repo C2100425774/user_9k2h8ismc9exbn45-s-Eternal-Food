@@ -189,5 +189,5 @@
   "itemGroup.eternal_food_mod_1789477527": "永恒原版食物",
   "gui.eternal_food_mod_1789477527.dispenser_gun.piercing": "穿透：%s",
   "tooltip.eternal_food_mod_1789477527.dispenser_gun.option.delay": "发射间隔：1~30 tick（0.05 ~ 1.50 秒）",
-  "tooltip.eternal_food_mod_1789477527.dispenser_gun.level3_warning": "3 级会把箭当成自定义子弹：非原版箭（模组箭）会丢失其特殊效果"
+  "tooltip.eternal_food_mod_1789477527.dispenser_gun.level3_warning": "3 级：非原版箭会丢失特殊效果"
 }
