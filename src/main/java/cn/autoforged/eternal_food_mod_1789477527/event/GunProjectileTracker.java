@@ -8,11 +8,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -20,11 +25,12 @@ import net.minecraftforge.fml.common.Mod;
  * 发射器枪弹射物的辅助逻辑。
  *
  * <ul>
- *   <li>3 级子弹：通过 {@link LivingAttackEvent} 在伤害判定前清掉目标的受击无敌时间，
- *       所以箭总能打出伤害、不会因为「hurt 失败」被原版弹开；穿透强制 0，一支箭只打一个目标。</li>
+ *   <li>3 级「子弹」：关掉原版箭碰撞（noPhysics），每 tick 自己用扫掠 AABB 检测生物、
+ *       用 clip 检测方块；命中生物时清掉无敌帧、手动造成伤害，然后立即 discard。
+ *       不经过原版箭的 onHitEntity，所以不会出现「hurt 失败 → 速度反向」的弹开。</li>
  *   <li>无限：箭类落地/卡住很快消失，区块卸载直接消失。</li>
  *   <li>防水：水里无视阻力。</li>
- *   <li>兜底：万一还是被弹开（速度反向/骤降），立刻恢复重力并向下掉。</li>
+ *   <li>兜底：其它等级被弹开时恢复重力并向下掉。</li>
  * </ul>
  */
 @Mod.EventBusSubscriber(modid = EternalFoodMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -42,6 +48,7 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Integer> POWERED = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAUNCH = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<Entity, Vec3> PRE_POS = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAST_POS = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Integer> POWER_STILL = Collections.synchronizedMap(new WeakHashMap<>());
 
@@ -69,15 +76,6 @@ public final class GunProjectileTracker {
         }
     }
 
-    /** 3 级子弹：伤害判定前清掉目标的受击无敌时间，让 hurt 必定成功，从而不会被弹开。 */
-    @SubscribeEvent
-    public static void onLivingAttack(LivingAttackEvent event) {
-        Entity direct = event.getSource().getDirectEntity();
-        if (direct != null && POWERED.getOrDefault(direct, 0) >= 3) {
-            event.getEntity().invulnerableTime = 0;
-        }
-    }
-
     @SubscribeEvent
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
         if (!(event.level instanceof ServerLevel level)) {
@@ -89,6 +87,7 @@ public final class GunProjectileTracker {
                     continue;
                 }
                 PRE_TICK.put(entity, entity.getDeltaMovement());
+                PRE_POS.put(entity, entity.position());
                 if (entity.tickCount >= POWERED_MAX_TICKS) {
                     entity.discard();
                 }
@@ -113,7 +112,7 @@ public final class GunProjectileTracker {
             Vec3 pos = entity.position();
             Vec3 last = LAST_POS.put(entity, pos);
             boolean noMove = last != null && last.distanceToSqr(pos) < 0.05;
-            boolean stuckNow = unloaded || noMove || entity.onGround()
+            boolean stuckNow = noMove || entity.onGround()
                     || level.getBlockState(entity.blockPosition()).isSolid()
                     || (entity instanceof AbstractArrow arrow
                             && arrow.getDeltaMovement().lengthSqr() < 1.0E-4);
@@ -131,16 +130,18 @@ public final class GunProjectileTracker {
         }
         for (Entity entity : new ArrayList<>(POWERED.keySet())) {
             if (!entity.isAlive() || entity.level() != level) {
-                PRE_TICK.remove(entity);
-                POWERED.remove(entity);
-                LAUNCH.remove(entity);
+                cleanup(entity);
                 continue;
             }
             if (entity.tickCount >= POWERED_MAX_TICKS) {
                 entity.discard();
-                PRE_TICK.remove(entity);
-                POWERED.remove(entity);
-                LAUNCH.remove(entity);
+                cleanup(entity);
+                continue;
+            }
+            if (POWERED.get(entity) >= 3 && entity instanceof AbstractArrow arrow) {
+                if (handleBullet(arrow, level)) {
+                    cleanup(entity);
+                }
                 continue;
             }
             Vec3 launch = LAUNCH.get(entity);
@@ -165,9 +166,9 @@ public final class GunProjectileTracker {
                 if (still >= 20) {
                     entity.discard();
                 }
-                continue;
+            } else {
+                POWER_STILL.remove(entity);
             }
-            POWER_STILL.remove(entity);
         }
         for (Entity entity : new ArrayList<>(RIPTIDE)) {
             Vec3 before = PRE_TICK.remove(entity);
@@ -178,6 +179,47 @@ public final class GunProjectileTracker {
                 entity.setDeltaMovement(before);
             }
         }
+    }
+
+    /**
+     * 3 级子弹的命中处理：扫掠检测方块和生物，命中生物时无视无敌帧手动造成伤害后消失。
+     * @return true 表示子弹已消失，需要清理记录
+     */
+    private static boolean handleBullet(AbstractArrow arrow, ServerLevel level) {
+        Vec3 current = arrow.position();
+        Vec3 previous = PRE_POS.getOrDefault(arrow, current);
+        if (previous.distanceToSqr(current) > 1.0E-8) {
+            BlockHitResult blockHit = level.clip(new ClipContext(previous, current,
+                    ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, arrow));
+            if (blockHit.getType() != HitResult.Type.MISS) {
+                arrow.discard();
+                return true;
+            }
+        }
+        AABB swept = arrow.getBoundingBox()
+                .expandTowards(current.subtract(previous))
+                .inflate(0.3);
+        Entity owner = arrow.getOwner();
+        List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, swept,
+                living -> living.isAlive() && living != owner);
+        if (targets.isEmpty()) {
+            return false;
+        }
+        LivingEntity target = targets.get(0);
+        target.invulnerableTime = 0;
+        int damage = Math.max(1, (int) Math.ceil(arrow.getDeltaMovement().length() * 2.0));
+        DamageSource source = level.damageSources().arrow(arrow, owner);
+        target.hurt(source, damage);
+        arrow.discard();
+        return true;
+    }
+
+    private static void cleanup(Entity entity) {
+        PRE_TICK.remove(entity);
+        PRE_POS.remove(entity);
+        POWERED.remove(entity);
+        LAUNCH.remove(entity);
+        POWER_STILL.remove(entity);
     }
 
     /** 每 2 tick 扫描一次所有已加载实体，兜底清理带持久标记的无限弹射物。 */

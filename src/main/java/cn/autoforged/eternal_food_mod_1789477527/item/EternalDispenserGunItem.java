@@ -521,6 +521,10 @@ public class EternalDispenserGunItem extends Item {
                 && !(projectile instanceof FireworkRocketEntity)) {
             GunProjectileTracker.markPowered(projectile, powerLevel);
         }
+        // 3 级子弹：关闭原版箭碰撞，命中完全由 GunProjectileTracker 手动处理
+        if (powerLevel >= 3 && projectile instanceof AbstractArrow arrow) {
+            arrow.setNoPhysics(true);
+        }
         level.addFreshEntity(projectile);
     }
 
