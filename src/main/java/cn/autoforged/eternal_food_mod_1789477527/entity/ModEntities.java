@@ -41,6 +41,16 @@ public class ModEntities {
                     .updateInterval(10)
                     .build("gun_projectile"));
 
+    /** 3 级力量的「子弹」：外观是箭，命中逻辑自定义。 */
+    public static final RegistryObject<EntityType<cn.autoforged.eternal_food_mod_1789477527.entity.GunBullet>> GUN_BULLET =
+            ENTITY_TYPES.register("gun_bullet", () -> EntityType.Builder
+                    .<cn.autoforged.eternal_food_mod_1789477527.entity.GunBullet>of(
+                            cn.autoforged.eternal_food_mod_1789477527.entity.GunBullet::new,
+                            MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .clientTrackingRange(4)
+                    .updateInterval(10)
+                    .build("gun_bullet"));
     public static void register(IEventBus modEventBus) {
         ENTITY_TYPES.register(modEventBus);
     }

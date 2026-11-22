@@ -2,6 +2,7 @@ package cn.autoforged.eternal_food_mod_1789477527.item;
 
 import cn.autoforged.eternal_food_mod_1789477527.EternalFoodMod;
 import cn.autoforged.eternal_food_mod_1789477527.entity.GunProjectile;
+import cn.autoforged.eternal_food_mod_1789477527.item.EternalTippedArrowItem;
 import cn.autoforged.eternal_food_mod_1789477527.entity.ThrownEternalMilk;
 import cn.autoforged.eternal_food_mod_1789477527.entity.ThrownEternalPotion;
 import cn.autoforged.eternal_food_mod_1789477527.event.GunProjectileTracker;
@@ -491,11 +492,16 @@ public class EternalDispenserGunItem extends Item {
             return;
         }
         if (powerLevel >= 3 && isBulletAmmo(ammo)) {
-            // 3 级：用自定义子弹实体，完全不经过原版箭的命中/弹开逻辑
-            GunProjectile bullet = new GunProjectile(level, origin.x, origin.y, origin.z, ammo.copy());
-            bullet.setBullet(true, Math.max(1,
+            // 3 级：外观是箭的自定义子弹，完全绕过原版箭的命中/弹开逻辑
+            cn.autoforged.eternal_food_mod_1789477527.entity.GunBullet bullet =
+                    new cn.autoforged.eternal_food_mod_1789477527.entity.GunBullet(level, player);
+            if (ammo.is(ModItems.ETERNAL_TIPPED_ARROW.get())) {
+                EternalTippedArrowItem.applyEffects(bullet, ammo);
+            } else if (ammo.is(Items.TIPPED_ARROW)) {
+                bullet.setEffectsFromItem(ammo);
+            }
+            bullet.setBulletDamage(Math.max(1,
                     (int) Math.ceil(projectileSpeed(powerLevel) * 2.0)));
-            bullet.setOwner(player);
             bullet.shoot(direction.x, direction.y, direction.z, projectileSpeed(powerLevel), uncertainty);
             level.addFreshEntity(bullet);
             return;

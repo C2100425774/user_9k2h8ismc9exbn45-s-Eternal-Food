@@ -28,6 +28,7 @@ public class ModClientEvents {
         event.registerEntityRenderer(ModEntities.THROWN_ETERNAL_MILK.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(ModEntities.THROWN_ETERNAL_POTION.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(ModEntities.GUN_PROJECTILE.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModEntities.GUN_BULLET.get(), GunBulletRenderer::new);
         // 永恒数字钟：正面用 7 段数码管实时画 HH:MM。
         event.registerBlockEntityRenderer(
                 cn.autoforged.eternal_food_mod_1789477527.block.entity.ModBlockEntities.ETERNAL_CLOCK.get(),
