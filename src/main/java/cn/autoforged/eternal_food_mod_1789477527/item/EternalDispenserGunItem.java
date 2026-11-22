@@ -504,6 +504,7 @@ public class EternalDispenserGunItem extends Item {
             bullet.shoot(direction.x, direction.y, direction.z, projectileSpeed(powerLevel), uncertainty);
             if (riptide) {
                 GunProjectileTracker.markRiptide(bullet);
+                bullet.getPersistentData().putBoolean("EternalGunWaterproof", true);
             }
             level.addFreshEntity(bullet);
             return;
@@ -540,6 +541,9 @@ public class EternalDispenserGunItem extends Item {
         }
         if (riptide) {
             GunProjectileTracker.markRiptide(projectile);
+            if (projectile instanceof AbstractArrow arrow) {
+                arrow.getPersistentData().putBoolean("EternalGunWaterproof", true);
+            }
         }
         // 力量：减少空气阻力 + 重力（火球 / 烟花这类不按普通物理飞的不处理）
         if (!(projectile instanceof AbstractHurtingProjectile)
