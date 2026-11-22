@@ -164,6 +164,8 @@ public class EternalDispenserGunItem extends Item {
     public static final String CFG_WATERPROOF = "CfgWaterproof";
     public static final String CFG_SILK = "CfgSilkTouch";
     public static final String CFG_POWER = "CfgPower";
+    /** 力量上限 3 级。 */
+    public static final int MAX_POWER = 3;
     public static final String CFG_DELAY = TAG_DELAY;
     private static final String CFG_LAST_FIRE = "CfgLastFire";
 
@@ -208,11 +210,11 @@ public class EternalDispenserGunItem extends Item {
             // 兼容旧版本用附魔「力量」的枪
             power = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, gun);
         }
-        return Math.max(0, Math.min(5, power));
+        return Math.max(0, Math.min(MAX_POWER, power));
     }
 
     public static void setPower(ItemStack gun, int power) {
-        gun.getOrCreateTag().putInt(CFG_POWER, Math.max(0, Math.min(5, power)));
+        gun.getOrCreateTag().putInt(CFG_POWER, Math.max(0, Math.min(MAX_POWER, power)));
     }
 
     /** 穿透等级 0~10（实际箭最多 4 级，界面允许调到 10）。 */
@@ -633,10 +635,13 @@ public class EternalDispenserGunItem extends Item {
 
     /** 打印速度：力量越高越快，5 级对齐原版弩的 3.15（约 100 格射程）。 */
     private static float projectileSpeed(int powerLevel) {
-        // 速度上限取原版弩的 3.15：超过这个速度，客户端实体同步会稀疏，
-        // 出现「位置跳跃/瞬移」的观感；0 级保留发射器 1.1，5 级 3.15，其余线性。
-        int power = Math.max(0, Math.min(5, powerLevel));
-        return 1.1F + (3.15F - 1.1F) * power / 5.0F;
+        // 0 级 = 原版发射器；1 级 = 弓；2 级及以上 = 原版弩。
+        int power = Math.max(0, Math.min(MAX_POWER, powerLevel));
+        return switch (power) {
+            case 0 -> 1.1F;
+            case 1 -> 3.0F;
+            default -> 3.15F;
+        };
     }
 
     private static Vec3 rotateY(Vec3 vector, double degrees) {

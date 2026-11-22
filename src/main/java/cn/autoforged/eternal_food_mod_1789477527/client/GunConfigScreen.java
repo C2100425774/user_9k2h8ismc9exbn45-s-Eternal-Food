@@ -60,7 +60,7 @@ public class GunConfigScreen extends Screen {
         }
         int sliderY = top + 3 * ROW + 4;
         this.powerSlider = new StepSlider(left, sliderY, PANEL_W - 20, 20,
-                EternalDispenserGunItem.CFG_POWER, 0, 5, EternalDispenserGunItem.getPower(this.gun),
+                EternalDispenserGunItem.CFG_POWER, 0, EternalDispenserGunItem.MAX_POWER, EternalDispenserGunItem.getPower(this.gun),
                 "gui.eternal_food_mod_1789477527.dispenser_gun.power");
         this.addRenderableWidget(this.powerSlider);
         this.piercingSlider = new StepSlider(left, sliderY + 26, PANEL_W - 20, 20,

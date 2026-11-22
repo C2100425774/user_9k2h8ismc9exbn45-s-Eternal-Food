@@ -47,6 +47,8 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAST_POS = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Integer> POWER_STILL = Collections.synchronizedMap(new WeakHashMap<>());
+    /** 3 级及以上的无重力飞行剩余 tick。 */
+    private static final Map<Entity, Integer> FLIGHT = Collections.synchronizedMap(new WeakHashMap<>());
 
     private GunProjectileTracker() {
     }
@@ -62,13 +64,23 @@ public final class GunProjectileTracker {
 
     public static void markPowered(Entity entity, int level) {
         int clamped = Math.max(0, Math.min(5, level));
-        if (clamped > 0) {
-            POWERED.put(entity, clamped);
-            Vec3 velocity = entity.getDeltaMovement();
-            if (velocity.lengthSqr() > 1.0E-6) {
-                LAUNCH.put(entity, velocity.normalize());
-            }
+        if (clamped <= 0) {
+            return;
         }
+        POWERED.put(entity, clamped);
+        Vec3 velocity = entity.getDeltaMovement();
+        if (velocity.lengthSqr() > 1.0E-6) {
+            LAUNCH.put(entity, velocity.normalize());
+        }
+        if (clamped >= 3) {
+            // 3 级及以上：飞行期间无重力，带飞行寿命
+            entity.setNoGravity(true);
+            FLIGHT.put(entity, flightTicks(clamped));
+        }
+    }
+
+    private static int flightTicks(int level) {
+        return 40;
     }
 
     private static double gravityOf(Entity entity) {
@@ -95,8 +107,9 @@ public final class GunProjectileTracker {
                 if (!entity.isAlive() || entity.level() != level) {
                     continue;
                 }
-                // 只记录速度用于「被弹开/停住」判定，不再做任何重力/阻力补偿
+                // 只记录速度用于「被弹开/停住」判定；3 级及以上飞行中无重力
                 PRE_TICK.put(entity, entity.getDeltaMovement());
+                entity.setNoGravity(POWERED.get(entity) >= 3);
                 if (entity.tickCount >= POWERED_MAX_TICKS) {
                     entity.discard();
                 }
@@ -144,6 +157,7 @@ public final class GunProjectileTracker {
                 PRE_TICK.remove(entity);
                 POWERED.remove(entity);
                 LAUNCH.remove(entity);
+                FLIGHT.remove(entity);
                 continue;
             }
             if (entity.tickCount >= POWERED_MAX_TICKS) {
@@ -151,6 +165,7 @@ public final class GunProjectileTracker {
                 PRE_TICK.remove(entity);
                 POWERED.remove(entity);
                 LAUNCH.remove(entity);
+                FLIGHT.remove(entity);
                 continue;
             }
             Vec3 launch = LAUNCH.get(entity);
@@ -163,9 +178,10 @@ public final class GunProjectileTracker {
                 deflected = true;
             }
             if (deflected) {
-                // 不再原路飞回：直接垂直落地
+                // 被弹开：立刻结束飞行寿命、恢复重力并垂直落地
                 entity.setDeltaMovement(0.0, -1.0, 0.0);
                 entity.setNoGravity(false);
+                FLIGHT.remove(entity);
                 continue;
             }
             if (before == null) {
@@ -180,8 +196,17 @@ public final class GunProjectileTracker {
                 continue;
             }
             POWER_STILL.remove(entity);
-            // 不做任何补偿：力量等级只影响出膛速度，弹道完全交给原版
-            // （之前在这里补重力和水平阻力，x/y/z 不同步导致左右/上下漂移）
+            int power = POWERED.get(entity);
+            if (power >= 3) {
+                // 无重力飞行寿命：结束时恢复重力，子弹开始下坠
+                int remaining = FLIGHT.getOrDefault(entity, 0) - 1;
+                if (remaining <= 0) {
+                    entity.setNoGravity(false);
+                    FLIGHT.remove(entity);
+                } else {
+                    FLIGHT.put(entity, remaining);
+                }
+            }
         }
         // 防水：水中无视阻力
         for (Entity entity : new ArrayList<>(RIPTIDE)) {
