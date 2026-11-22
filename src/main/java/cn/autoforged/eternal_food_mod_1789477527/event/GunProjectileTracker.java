@@ -43,6 +43,7 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Integer> POWERED = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAUNCH = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> PRE_TICK = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<Entity, Vec3> RIPTIDE_PRE = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Vec3> LAST_POS = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Map<Entity, Integer> POWER_STILL = Collections.synchronizedMap(new WeakHashMap<>());
 
@@ -87,8 +88,8 @@ public final class GunProjectileTracker {
             }
             for (Entity entity : new ArrayList<>(RIPTIDE)) {
                 if (entity.isAlive() && entity.level() == level && entity.isInWater()
-                        && !PRE_TICK.containsKey(entity)) {
-                    PRE_TICK.put(entity, entity.getDeltaMovement());
+                        && !RIPTIDE_PRE.containsKey(entity)) {
+                    RIPTIDE_PRE.put(entity, entity.getDeltaMovement());
                 }
             }
             return;
@@ -158,11 +159,12 @@ public final class GunProjectileTracker {
             }
         }
         for (Entity entity : new ArrayList<>(RIPTIDE)) {
-            Vec3 before = PRE_TICK.remove(entity);
+            Vec3 before = RIPTIDE_PRE.remove(entity);
             if (!entity.isAlive() || entity.level() != level) {
                 continue;
             }
             if (before != null && entity.isInWater()) {
+                // 参考三叉戟：水中几乎不损失速度
                 entity.setDeltaMovement(before);
             }
         }
@@ -170,6 +172,7 @@ public final class GunProjectileTracker {
 
     private static void cleanup(Entity entity) {
         PRE_TICK.remove(entity);
+        RIPTIDE_PRE.remove(entity);
         POWERED.remove(entity);
         LAUNCH.remove(entity);
         POWER_STILL.remove(entity);

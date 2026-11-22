@@ -502,6 +502,9 @@ public class EternalDispenserGunItem extends Item {
             bullet.setBulletDamage(Math.max(1,
                     (int) Math.ceil(projectileSpeed(powerLevel) * 2.0)));
             bullet.shoot(direction.x, direction.y, direction.z, projectileSpeed(powerLevel), uncertainty);
+            if (riptide) {
+                GunProjectileTracker.markRiptide(bullet);
+            }
             level.addFreshEntity(bullet);
             return;
         }
