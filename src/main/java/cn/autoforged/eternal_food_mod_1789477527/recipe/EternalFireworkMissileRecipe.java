@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import cn.autoforged.eternal_food_mod_1789477527.item.ModItems;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -67,19 +68,17 @@ public class EternalFireworkMissileRecipe extends ShapelessRecipe {
         fireworks.put("Explosions", eight);
         CompoundTag tag = result.getOrCreateTag();
         tag.put("Fireworks", fireworks);
+        fireworks.putBoolean("EternalMissile", true);
         tag.putBoolean("EternalMissile", true);
         tag.putByte("HideFlags", (byte) 32);
-        // 自定义名字「永恒烟花火箭导弹」仍用同一个物品
-        result.setHoverName(net.minecraft.network.chat.Component.translatable(
-                "item.eternal_food_mod_1789477527.eternal_firework_missile")
-                .withStyle(net.minecraft.ChatFormatting.RED));
         return result;
     }
 
     private static ItemStack findFireworkSource(CraftingContainer container) {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack ingredient = container.getItem(i);
-            if (ingredient.is(Items.FIREWORK_ROCKET)) {
+            if (ingredient.is(Items.FIREWORK_ROCKET)
+                    || ingredient.is(ModItems.ETERNAL_FIREWORK_ROCKET.get())) {
                 return ingredient;
             }
         }
