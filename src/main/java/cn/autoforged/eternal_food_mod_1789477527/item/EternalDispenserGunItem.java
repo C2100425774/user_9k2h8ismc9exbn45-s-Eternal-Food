@@ -45,6 +45,7 @@ import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ArrowItem;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
@@ -471,9 +472,8 @@ public class EternalDispenserGunItem extends Item {
 
     /** 3 级子弹使用的弹药类型。 */
     private static boolean isBulletAmmo(ItemStack stack) {
-        return stack.is(Items.ARROW) || stack.is(Items.TIPPED_ARROW)
-                || stack.is(Items.SPECTRAL_ARROW)
-                || stack.is(ModItems.ETERNAL_TIPPED_ARROW.get());
+        // 所有箭类物品（包括其它模组的箭）
+        return stack.getItem() instanceof ArrowItem;
     }
 
     private static void spawnProjectileAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
@@ -635,6 +635,14 @@ public class EternalDispenserGunItem extends Item {
             trident.setPos(origin.x, origin.y, origin.z);
             return trident;
         }
+        // 其它模组的箭：通过 ArrowItem#createArrow 生成它自己的弹射物，
+        // 保留该模组的渲染与效果。
+        if (item instanceof ArrowItem arrowItem) {
+            AbstractArrow custom = arrowItem.createArrow(level, ammo, player);
+            if (custom != null) {
+                return custom;
+            }
+        }
         return null;
     }
 
@@ -693,6 +701,11 @@ public class EternalDispenserGunItem extends Item {
         tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.dispenser_gun.delay",
                 String.format(java.util.Locale.ROOT, "%.2f", getFireDelay(stack) / 20.0F))
                 .withStyle(ChatFormatting.GRAY));
+        if (getPower(stack) >= 3) {
+            tooltip.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.dispenser_gun.level3_warning")
+                    .withStyle(ChatFormatting.RED));
+        }
         tooltip.add(Component.translatable(
                 "tooltip.eternal_food_mod_1789477527.dispenser_gun.shift")
                 .withStyle(ChatFormatting.DARK_GRAY));
