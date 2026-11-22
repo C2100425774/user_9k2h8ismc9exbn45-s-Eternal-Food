@@ -80,9 +80,8 @@ public class EternalFireworkRocketItem extends FireworkRocketItem {
         net.minecraft.nbt.CompoundTag rootTag = stack.getTag();
         boolean missile = rootTag != null && (rootTag.getBoolean("EternalMissile")
                 || rootTag.getCompound("Fireworks").getBoolean("EternalMissile")
-                || (rootTag.getByte("HideFlags") == 32
-                    && rootTag.getCompound("Fireworks")
-                            .getList("Explosions", net.minecraft.nbt.Tag.TAG_COMPOUND).size() >= 8));
+                || rootTag.getCompound("Fireworks")
+                        .getList("Explosions", net.minecraft.nbt.Tag.TAG_COMPOUND).size() >= 8);
         if (missile) {
             tooltip.add(Component.translatable(
                     "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.name")
@@ -116,6 +115,11 @@ public class EternalFireworkRocketItem extends FireworkRocketItem {
                     Component.translatable(star.getBoolean("Flicker")
                             ? "tooltip.eternal_food_mod_1789477527.yes"
                             : "tooltip.eternal_food_mod_1789477527.no"))
+                    .withStyle(ChatFormatting.GRAY));
+            int flight = fireworks == null ? 0 : fireworks.getByte("Flight");
+            tooltip.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flight",
+                    String.format(java.util.Locale.ROOT, "%.1f", (flight + 1) * 0.5))
                     .withStyle(ChatFormatting.GRAY));
             tooltip.add(Component.translatable(
                     "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.damage")

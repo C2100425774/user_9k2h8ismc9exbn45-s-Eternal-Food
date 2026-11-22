@@ -204,5 +204,6 @@
   "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.3": "苦力怕形",
   "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.4": "爆裂形",
   "tooltip.eternal_food_mod_1789477527.yes": "有",
-  "tooltip.eternal_food_mod_1789477527.no": "无"
+  "tooltip.eternal_food_mod_1789477527.no": "无",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flight": "飞行时长：约 %s 秒"
 }

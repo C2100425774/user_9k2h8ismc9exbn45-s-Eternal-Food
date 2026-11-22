@@ -204,5 +204,6 @@
   "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.3": "creeper",
   "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.4": "burst",
   "tooltip.eternal_food_mod_1789477527.yes": "yes",
-  "tooltip.eternal_food_mod_1789477527.no": "no"
+  "tooltip.eternal_food_mod_1789477527.no": "no",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flight": "Flight time: about %s s"
 }

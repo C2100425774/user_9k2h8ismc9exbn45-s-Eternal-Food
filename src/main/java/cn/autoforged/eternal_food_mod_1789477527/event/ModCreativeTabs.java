@@ -202,7 +202,6 @@ public class ModCreativeTabs {
         net.minecraft.nbt.CompoundTag tag = stack.getOrCreateTag();
         fireworks.putBoolean("EternalMissile", true);
         tag.putBoolean("EternalMissile", true);
-        tag.putByte("HideFlags", (byte) 32);
         return stack;
     }
 

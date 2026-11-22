@@ -70,15 +70,13 @@ public class EternalFireworkMissileRecipe extends ShapelessRecipe {
         tag.put("Fireworks", fireworks);
         fireworks.putBoolean("EternalMissile", true);
         tag.putBoolean("EternalMissile", true);
-        tag.putByte("HideFlags", (byte) 32);
         return result;
     }
 
     private static ItemStack findFireworkSource(CraftingContainer container) {
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack ingredient = container.getItem(i);
-            if (ingredient.is(Items.FIREWORK_ROCKET)
-                    || ingredient.is(ModItems.ETERNAL_FIREWORK_ROCKET.get())) {
+            if (ingredient.is(ModItems.ETERNAL_FIREWORK_ROCKET.get())) {
                 return ingredient;
             }
         }
