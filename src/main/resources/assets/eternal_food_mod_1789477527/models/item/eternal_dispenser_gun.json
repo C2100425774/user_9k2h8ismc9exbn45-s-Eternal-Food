@@ -223,7 +223,7 @@
       "rotation": [
         -90,
         180,
-        0
+        180
       ],
       "translation": [
         0,
@@ -240,7 +240,7 @@
       "rotation": [
         -90,
         180,
-        0
+        180
       ],
       "translation": [
         0,
