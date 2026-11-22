@@ -12,6 +12,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.alchemy.PotionUtils;
@@ -91,13 +92,13 @@ public class AnvilCombineHandler {
         // 永恒奶桶plus / 永恒喷溅型奶瓶plus 只清除继承的 debuff，保留 buff。
         if (fish.is(ModItems.ETERNAL_ENCHANTED_FISH.get())) {
             if (isClearAllMilk(other)) {
-                acceptOutput(event, new ItemStack(ModItems.ETERNAL_FISH.get()));
+                acceptOutput(event, withEnchantments(fish, ModItems.ETERNAL_FISH.get()));
                 return;
             }
             if (isDebuffOnlyMilk(other)) {
                 List<MobEffectInstance> kept =
                         EternalEnchantedFishItem.removeDebuffs(EternalEnchantedFishItem.getBuffs(fish));
-                ItemStack output = new ItemStack(ModItems.ETERNAL_ENCHANTED_FISH.get());
+                ItemStack output = withEnchantments(fish, ModItems.ETERNAL_ENCHANTED_FISH.get());
                 EternalEnchantedFishItem.setBuffs(output, kept);
                 acceptOutput(event, output);
                 return;
@@ -127,10 +128,20 @@ public class AnvilCombineHandler {
             return;
         }
 
-        ItemStack output = new ItemStack(ModItems.ETERNAL_ENCHANTED_FISH.get());
+        ItemStack output = withEnchantments(fish, ModItems.ETERNAL_ENCHANTED_FISH.get());
         EternalEnchantedFishItem.setBuffs(output, merged);
         EternalEnchantedFishItem.setFood(output, nutrition, saturation);
         acceptOutput(event, output);
+    }
+
+    /** 换物品类型时只复制附魔，避免把鱼的 buff / 营养标签带到新物品上。 */
+    private static ItemStack withEnchantments(ItemStack source, net.minecraft.world.item.Item target) {
+        ItemStack output = new ItemStack(target);
+        var enchantments = EnchantmentHelper.getEnchantments(source);
+        if (!enchantments.isEmpty()) {
+            EnchantmentHelper.setEnchantments(enchantments, output);
+        }
+        return output;
     }
 
     /** 只消耗 1 级经验（cost 1）、右侧材料仅消耗 1 个（materialCost 1），因此不会触发经验惩罚。 */

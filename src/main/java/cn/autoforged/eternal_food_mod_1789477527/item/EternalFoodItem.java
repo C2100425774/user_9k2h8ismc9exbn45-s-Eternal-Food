@@ -198,9 +198,15 @@ public class EternalFoodItem extends Item {
         }
     }
 
-    /** 允许放进附魔台（食物本身没有耐久，默认不可附魔）。 */
+    /** 允许放进附魔台；但只给「吃饥饿值/饱和度」的食物，特效用食物不参与附魔。 */
     @Override
     public boolean isEnchantable(ItemStack stack) {
+        if (this instanceof EternalSleepMushroomItem || this instanceof EternalStarItem) {
+            return false;
+        }
+        if (this.getBaseItem() == Items.MILK_BUCKET) {
+            return false;
+        }
         return true;
     }
 
