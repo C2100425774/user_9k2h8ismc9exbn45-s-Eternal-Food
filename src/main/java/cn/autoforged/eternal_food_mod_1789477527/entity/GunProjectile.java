@@ -13,6 +13,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
@@ -20,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -40,6 +42,8 @@ public class GunProjectile extends ThrowableItemProjectile {
     private int powerLevel;
     private boolean infinite;
     private boolean riptide;
+    private boolean bullet;
+    private int bulletDamage = 1;
     /** 力量 V 时固定使用的出膛速度（保证绝对直线）。 */
     private Vec3 straightVelocity;
 
@@ -56,6 +60,11 @@ public class GunProjectile extends ThrowableItemProjectile {
     @Override
     protected Item getDefaultItem() {
         return Items.SNOWBALL;
+    }
+
+    public void setBullet(boolean bullet, int damage) {
+        this.bullet = bullet;
+        this.bulletDamage = Math.max(1, damage);
     }
 
     public void setMode(int mode) {
@@ -89,6 +98,8 @@ public class GunProjectile extends ThrowableItemProjectile {
         super.addAdditionalSaveData(tag);
         tag.putInt("GunMode", this.getMode());
         tag.putInt("GunPower", this.powerLevel);
+        tag.putBoolean("GunBullet", this.bullet);
+        tag.putInt("GunBulletDamage", this.bulletDamage);
         tag.putBoolean("GunInfinite", this.infinite);
         tag.putBoolean("GunRiptide", this.riptide);
     }
@@ -98,6 +109,8 @@ public class GunProjectile extends ThrowableItemProjectile {
         super.readAdditionalSaveData(tag);
         this.setMode(tag.getInt("GunMode"));
         this.powerLevel = tag.getInt("GunPower");
+        this.bullet = tag.getBoolean("GunBullet");
+        this.bulletDamage = Math.max(1, tag.getInt("GunBulletDamage"));
         this.infinite = tag.getBoolean("GunInfinite");
         this.riptide = tag.getBoolean("GunRiptide");
     }
@@ -118,6 +131,24 @@ public class GunProjectile extends ThrowableItemProjectile {
     @Override
     protected void onHit(HitResult result) {
         if (this.level().isClientSide) {
+            return;
+        }
+        if (this.bullet) {
+            if (result instanceof EntityHitResult hit
+                    && hit.getEntity() instanceof LivingEntity living && living != this.getOwner()) {
+                // 清掉无敌帧/受击硬直，无视无敌帧造成伤害
+                living.invulnerableTime = 0;
+                living.hurtTime = 0;
+                float absorption = living.getAbsorptionAmount();
+                if (absorption > 0.0F) {
+                    living.setAbsorptionAmount(0.0F);
+                }
+                living.hurt(this.damageSources().thrown(this, this.getOwner()), this.bulletDamage);
+                if (absorption > 0.0F) {
+                    living.setAbsorptionAmount(absorption);
+                }
+            }
+            this.discard();
             return;
         }
         if (this.getMode() == MODE_SPAWN_EGG) {

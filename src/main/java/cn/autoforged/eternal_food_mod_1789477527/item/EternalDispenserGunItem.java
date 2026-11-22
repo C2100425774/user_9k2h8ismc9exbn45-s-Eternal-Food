@@ -468,6 +468,13 @@ public class EternalDispenserGunItem extends Item {
         return key != null && EternalFoodMod.MOD_ID.equals(key.getNamespace());
     }
 
+    /** 3 级子弹使用的弹药类型。 */
+    private static boolean isBulletAmmo(ItemStack stack) {
+        return stack.is(Items.ARROW) || stack.is(Items.TIPPED_ARROW)
+                || stack.is(Items.SPECTRAL_ARROW)
+                || stack.is(ModItems.ETERNAL_TIPPED_ARROW.get());
+    }
+
     private static void spawnProjectileAmmo(ServerLevel level, Player player, ItemStack ammo, Vec3 origin,
             Vec3 direction, int powerLevel, boolean flame, int piercing, boolean infinity,
             boolean riptide, float uncertainty, boolean silk, boolean sideArrow) {
@@ -481,6 +488,16 @@ public class EternalDispenserGunItem extends Item {
             double vy = powerLevel >= 5 ? direction.y : direction.y + 0.1;
             projectile.shoot(direction.x, vy, direction.z, projectileSpeed(powerLevel), uncertainty);
             level.addFreshEntity(projectile);
+            return;
+        }
+        if (powerLevel >= 3 && isBulletAmmo(ammo)) {
+            // 3 级：用自定义子弹实体，完全不经过原版箭的命中/弹开逻辑
+            GunProjectile bullet = new GunProjectile(level, origin.x, origin.y, origin.z, ammo.copy());
+            bullet.setBullet(true, Math.max(1,
+                    (int) Math.ceil(projectileSpeed(powerLevel) * 2.0)));
+            bullet.setOwner(player);
+            bullet.shoot(direction.x, direction.y, direction.z, projectileSpeed(powerLevel), uncertainty);
+            level.addFreshEntity(bullet);
             return;
         }
         Projectile projectile = createProjectile(level, player, ammo, origin, direction, silk);
