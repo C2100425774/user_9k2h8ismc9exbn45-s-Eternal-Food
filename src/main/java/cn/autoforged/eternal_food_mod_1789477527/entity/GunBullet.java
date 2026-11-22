@@ -60,6 +60,9 @@ public class GunBullet extends Arrow {
             }
             DamageSource source = this.damageSources().arrow(this, this.getOwner());
             living.hurt(source, this.bulletDamage);
+            // 自定义 onHitEntity 不会自动跑 Arrow 的 post-hurt 效果，这里手动补上
+            // （药箭的药水效果 / 永恒药箭效果都在 effects 集合里）
+            this.doPostHurtEffects(living);
             if (this.spectral) {
                 // 光灵箭：命中后附加发光
                 living.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200), this.getOwner());
