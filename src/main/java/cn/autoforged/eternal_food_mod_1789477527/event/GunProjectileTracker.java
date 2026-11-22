@@ -12,10 +12,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.entity.projectile.ThrownPotion;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -111,7 +109,7 @@ public final class GunProjectileTracker {
                 }
                 // 只记录速度用于「被弹开/停住」判定；3 级及以上飞行中无重力
                 PRE_TICK.put(entity, entity.getDeltaMovement());
-                entity.setNoGravity(POWERED.get(entity) >= 3);
+                entity.setNoGravity(FLIGHT.containsKey(entity));
                 if (entity.tickCount >= POWERED_MAX_TICKS) {
                     entity.discard();
                 }
@@ -173,17 +171,19 @@ public final class GunProjectileTracker {
             Vec3 launch = LAUNCH.get(entity);
             Vec3 now = entity.getDeltaMovement();
             Vec3 before = PRE_TICK.remove(entity);
-            boolean deflected = launch != null && now.dot(launch) < -0.01;
-            // 被弹开时速度会骤降（原版把箭弹开并大幅减速），也一并判定
+            // 被弹开 = 速度方向反转（相对发射方向或上一 tick 速度），或速度骤降
+            boolean deflected = (launch != null && now.dot(launch) < -0.01)
+                    || (before != null && now.dot(before) < 0.0);
             if (before != null && before.lengthSqr() > 0.01
                     && now.lengthSqr() < before.lengthSqr() * 0.25) {
                 deflected = true;
             }
             if (deflected) {
-                // 被弹开：立刻结束飞行寿命、恢复重力并垂直落地
-                entity.setDeltaMovement(0.0, -1.0, 0.0);
+                // 不管伤害有没有打出来：立刻恢复重力并结束飞行寿命
                 entity.setNoGravity(false);
+                entity.setDeltaMovement(0.0, -0.5, 0.0);
                 FLIGHT.remove(entity);
+                POWER_STILL.remove(entity);
                 continue;
             }
             if (before == null) {
@@ -207,6 +207,22 @@ public final class GunProjectileTracker {
                     FLIGHT.remove(entity);
                 } else {
                     FLIGHT.put(entity, remaining);
+                }
+            }
+            // 3 级子弹落地后统一 5 tick 消失（无论是否无限，寿命一致）
+            if (power >= 3 && !FLIGHT.containsKey(entity)) {
+                boolean stuck = entity.onGround()
+                        || level.getBlockState(entity.blockPosition()).isSolid()
+                        || now.lengthSqr() < 0.0025;
+                int count = STUCK_TICKS.getOrDefault(entity, 0);
+                if (stuck) {
+                    if (count + 1 >= 5) {
+                        entity.discard();
+                    } else {
+                        STUCK_TICKS.put(entity, count + 1);
+                    }
+                } else {
+                    STUCK_TICKS.remove(entity);
                 }
             }
         }
@@ -262,20 +278,4 @@ public final class GunProjectileTracker {
                 || entity.getDeltaMovement().lengthSqr() < 1.0E-4;
     }
 
-    /** 3 级子弹：命中实体就消失（不管对方是否无敌帧），彻底避免被弹开。 */
-    @SubscribeEvent
-    public static void onProjectileImpact(ProjectileImpactEvent event) {
-        Entity projectile = event.getProjectile();
-        Integer level = POWERED.get(projectile);
-        if (level == null || level < 3) {
-            return;
-        }
-        if (event.getRayTraceResult() instanceof EntityHitResult) {
-            projectile.discard();
-            POWERED.remove(projectile);
-            LAUNCH.remove(projectile);
-            FLIGHT.remove(projectile);
-            PRE_TICK.remove(projectile);
-        }
-    }
 }
