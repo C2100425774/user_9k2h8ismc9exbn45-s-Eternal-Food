@@ -78,13 +78,42 @@ public class EternalFireworkRocketItem extends FireworkRocketItem {
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         if (stack.hasTag() && stack.getTag().getBoolean("EternalMissile")) {
-            // 导弹版：同一个物品，隐藏原版烟花描述，只显示导弹特性
+            tooltip.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.name")
+                    .withStyle(ChatFormatting.RED));
+            net.minecraft.nbt.CompoundTag fireworks = stack.getTagElement("Fireworks");
+            net.minecraft.nbt.ListTag explosions = fireworks == null
+                    ? new net.minecraft.nbt.ListTag()
+                    : fireworks.getList("Explosions", net.minecraft.nbt.Tag.TAG_COMPOUND);
+            net.minecraft.nbt.CompoundTag star = explosions.isEmpty()
+                    ? new net.minecraft.nbt.CompoundTag()
+                    : explosions.getCompound(0);
+            StringBuilder colors = new StringBuilder();
+            for (int color : star.getIntArray("Colors")) {
+                if (colors.length() > 0) {
+                    colors.append(", ");
+                }
+                colors.append(String.format("#%06X", color & 0xFFFFFF));
+            }
+            if (colors.length() == 0) {
+                colors.append("—");
+            }
+            int shapeId = star.getByte("Type");
+            tooltip.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star_info",
+                    colors.toString(),
+                    Component.translatable(
+                            "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape." + shapeId),
+                    Component.translatable(star.getBoolean("Trail")
+                            ? "tooltip.eternal_food_mod_1789477527.yes"
+                            : "tooltip.eternal_food_mod_1789477527.no"),
+                    Component.translatable(star.getBoolean("Flicker")
+                            ? "tooltip.eternal_food_mod_1789477527.yes"
+                            : "tooltip.eternal_food_mod_1789477527.no"))
+                    .withStyle(ChatFormatting.GRAY));
             tooltip.add(Component.translatable(
                     "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.damage")
                     .withStyle(ChatFormatting.RED));
-            tooltip.add(Component.translatable(
-                    "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star")
-                    .withStyle(ChatFormatting.GRAY));
             tooltip.add(Component.translatable(
                     "tooltip.eternal_food_mod_1789477527.eternal_use")
                     .withStyle(ChatFormatting.GOLD));

@@ -202,10 +202,9 @@ public class ModCreativeTabs {
         net.minecraft.nbt.CompoundTag tag = stack.getOrCreateTag();
         tag.putBoolean("EternalMissile", true);
         tag.putByte("HideFlags", (byte) 32);
-        tag.putString("display.Name", net.minecraft.network.chat.Component.Serializer.toJson(
-                net.minecraft.network.chat.Component.translatable(
-                        "item.eternal_food_mod_1789477527.eternal_firework_missile")
-                        .withStyle(net.minecraft.ChatFormatting.RED)));
+        stack.setHoverName(net.minecraft.network.chat.Component.translatable(
+                "item.eternal_food_mod_1789477527.eternal_firework_missile")
+                .withStyle(net.minecraft.ChatFormatting.RED));
         return stack;
     }
 

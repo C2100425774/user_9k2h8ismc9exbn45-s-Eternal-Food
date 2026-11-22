@@ -194,6 +194,15 @@
   "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.damage": "Special: explosion damage 33 (14 large ball stars)",
   "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.no_block_damage": "Firework does not break blocks",
   "item.eternal_food_mod_1789477527.eternal_firework_missile": "Eternal Firework Rocket Missile",
-  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.damage": "Special: 21 explosion damage at the center (8 stars)",
-  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star": "Inherits the first star, duplicated 8 times (color/shape/trail/twinkle) and flight duration"
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.damage": "21 explosion damage at the center (8 identical stars)",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star": "Inherits the first star, duplicated 8 times (color/shape/trail/twinkle) and flight duration",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.name": "Eternal Firework Rocket Missile",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star_info": "Star: colors %s, shape %s, trail %s, twinkle %s",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.0": "small ball",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.1": "large ball",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.2": "star",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.3": "creeper",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.4": "burst",
+  "tooltip.eternal_food_mod_1789477527.yes": "yes",
+  "tooltip.eternal_food_mod_1789477527.no": "no"
 }

@@ -194,6 +194,15 @@
   "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.damage": "特性：爆炸伤害 33（14 个大型球状烟火之星）",
   "tooltip.eternal_food_mod_1789477527.eternal_firework_rocket.no_block_damage": "烟花不会破坏方块",
   "item.eternal_food_mod_1789477527.eternal_firework_missile": "永恒烟花火箭导弹",
-  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.damage": "特性：中心爆炸伤害 21（8 个烟火之星）",
-  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star": "继承来源第一颗星，复制为 8 份（颜色/形状/踪迹/闪烁）与飞行时长"
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.damage": "中心爆炸伤害 21（8 个同属性烟火之星）",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star": "继承来源第一颗星，复制为 8 份（颜色/形状/踪迹/闪烁）与飞行时长",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.name": "永恒烟花火箭导弹",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star_info": "烟火之星：颜色 %s，形状 %s，踪迹 %s，闪烁 %s",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.0": "小型球状",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.1": "大型球状",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.2": "星形",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.3": "苦力怕形",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.4": "爆裂形",
+  "tooltip.eternal_food_mod_1789477527.yes": "有",
+  "tooltip.eternal_food_mod_1789477527.no": "无"
 }
