@@ -3,6 +3,8 @@ package cn.autoforged.eternal_food_mod_1789477527.entity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.ItemStack;
@@ -18,6 +20,7 @@ import net.minecraft.world.phys.EntityHitResult;
 public class GunBullet extends Arrow {
 
     private int bulletDamage = 1;
+    private boolean spectral;
 
     public GunBullet(EntityType<? extends GunBullet> type, Level level) {
         super(type, level);
@@ -26,6 +29,10 @@ public class GunBullet extends Arrow {
     public GunBullet(Level level, LivingEntity owner) {
         super(level, owner);
         this.setOwner(owner);
+    }
+
+    public void setSpectral(boolean spectral) {
+        this.spectral = spectral;
     }
 
     public void setBulletDamage(int damage) {
@@ -53,6 +60,10 @@ public class GunBullet extends Arrow {
             }
             DamageSource source = this.damageSources().arrow(this, this.getOwner());
             living.hurt(source, this.bulletDamage);
+            if (this.spectral) {
+                // 光灵箭：命中后附加发光
+                living.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200), this.getOwner());
+            }
             if (absorption > 0.0F) {
                 living.setAbsorptionAmount(absorption);
             }

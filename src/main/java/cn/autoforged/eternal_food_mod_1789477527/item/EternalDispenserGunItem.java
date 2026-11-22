@@ -499,6 +499,8 @@ public class EternalDispenserGunItem extends Item {
                 EternalTippedArrowItem.applyEffects(bullet, ammo);
             } else if (ammo.is(Items.TIPPED_ARROW)) {
                 bullet.setEffectsFromItem(ammo);
+            } else if (ammo.is(Items.SPECTRAL_ARROW)) {
+                bullet.setSpectral(true);
             }
             bullet.setBulletDamage(Math.max(1,
                     (int) Math.ceil(projectileSpeed(powerLevel) * 2.0)));
