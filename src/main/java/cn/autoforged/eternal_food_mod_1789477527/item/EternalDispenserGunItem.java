@@ -721,6 +721,11 @@ public class EternalDispenserGunItem extends Item {
                     Component.translatable("enchantment.level." + power))
                     .withStyle(ChatFormatting.GRAY));
         }
+        if (power >= 3) {
+            lines.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.dispenser_gun.effect.power_bullet")
+                    .withStyle(ChatFormatting.GRAY));
+        }
         if (getToggle(gun, CFG_FLAME)) {
             lines.add(effectLine("flame"));
         }
