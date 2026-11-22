@@ -65,10 +65,12 @@ public final class EternalFoodEnchantmentHandler {
         if (feast > 0) {
             addEffectLine(tooltip, MobEffects.SATURATION, feast * 20 * 60, 0);
         }
-        // 饱食不给 buff，只写附魔效果
-        if (level(stack, ModEnchantments.SATIETY) > 0) {
+        // 饱食不给 buff，直接写这一级实际给予的饥饿值/饱和度
+        int satiety = level(stack, ModEnchantments.SATIETY);
+        if (satiety > 0) {
             tooltip.add(net.minecraft.network.chat.Component.translatable(
-                    ModEnchantments.SATIETY.get().getDescriptionId() + ".desc")
+                    ModEnchantments.SATIETY.get().getDescriptionId() + ".tooltip",
+                    satiety * 2, satiety * 4)
                     .withStyle(net.minecraft.ChatFormatting.GRAY));
         }
     }

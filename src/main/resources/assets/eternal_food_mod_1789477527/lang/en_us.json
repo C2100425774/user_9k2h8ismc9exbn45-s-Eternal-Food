@@ -215,5 +215,6 @@
   "enchantment.eternal_food_mod_1789477527.adrenaline.desc": "When eaten: Strength and Speed; higher levels are stronger and last longer",
   "enchantment.eternal_food_mod_1789477527.fitness.desc": "When eaten: Absorption and Resistance; higher levels are stronger and last longer",
   "enchantment.eternal_food_mod_1789477527.satiety.desc": "When eaten: +2 hunger and +4 saturation per level",
-  "enchantment.eternal_food_mod_1789477527.feast.desc": "When eaten: Saturation for 1 minute per level"
+  "enchantment.eternal_food_mod_1789477527.feast.desc": "When eaten: Saturation for 1 minute per level",
+  "enchantment.eternal_food_mod_1789477527.satiety.tooltip": "Restores %s hunger and %s saturation"
 }
