@@ -1,0 +1,15 @@
+{
+  "type": "eternal_food_mod_1789477527:crafting_shapeless_with_missile_effects",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "eternal_food_mod_1789477527:eternal_firework_rocket"
+    },
+    {
+      "item": "minecraft:tnt"
+    }
+  ],
+  "result": {
+    "item": "eternal_food_mod_1789477527:eternal_firework_missile"
+  }
+}

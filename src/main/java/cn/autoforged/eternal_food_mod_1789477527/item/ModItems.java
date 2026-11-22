@@ -235,6 +235,10 @@ public class ModItems {
             ITEMS.register("eternal_firework_rocket",
                     () -> new EternalFireworkRocketItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
 
+    public static final RegistryObject<Item> ETERNAL_FIREWORK_MISSILE =
+            ITEMS.register("eternal_firework_missile",
+                    () -> new EternalFireworkMissileItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE)));
+
     // 永恒之星（时间）：由下界之星、潮涌核心、嗅探兽蛋、龙息、下界合金锭、龙蛋、附魔金苹果、
     // 紫水晶碎片、回响碎片无序合成（见 ModRecipeProvider）。可无限食用，食用后把玩家当前
     // 所有 buff 与 debuff 的持续时间改为无限（-1）；并可在铁砧中与药水 / 附魔永恒之鱼合成，
