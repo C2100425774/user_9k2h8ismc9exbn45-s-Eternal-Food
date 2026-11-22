@@ -9,9 +9,11 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -49,6 +51,7 @@ public final class GunProjectileTracker {
     private static final Map<Entity, Integer> POWER_STILL = Collections.synchronizedMap(new WeakHashMap<>());
     /** 3 级及以上的无重力飞行剩余 tick。 */
     private static final Map<Entity, Integer> FLIGHT = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<Entity, Vec3> PRE_POS = Collections.synchronizedMap(new WeakHashMap<>());
     /** 发射时的朝向，用于识别原版弹开（弹开会把 yRot 翻转 180°）。 */
     private static final Map<Entity, Float> LAUNCH_YAW = Collections.synchronizedMap(new WeakHashMap<>());
     private static final org.slf4j.Logger LOGGER =
@@ -115,6 +118,7 @@ public final class GunProjectileTracker {
                 }
                 // 只记录速度用于「被弹开/停住」判定；3 级及以上飞行中无重力
                 PRE_TICK.put(entity, entity.getDeltaMovement());
+                PRE_POS.put(entity, entity.position());
                 entity.setNoGravity(FLIGHT.containsKey(entity));
                 if (entity.tickCount >= POWERED_MAX_TICKS) {
                     entity.discard();
@@ -163,6 +167,7 @@ public final class GunProjectileTracker {
                 PRE_TICK.remove(entity);
                 POWERED.remove(entity);
                 LAUNCH.remove(entity);
+                PRE_POS.remove(entity);
                 FLIGHT.remove(entity);
                 LAUNCH_YAW.remove(entity);
                 continue;
@@ -172,6 +177,7 @@ public final class GunProjectileTracker {
                 PRE_TICK.remove(entity);
                 POWERED.remove(entity);
                 LAUNCH.remove(entity);
+                PRE_POS.remove(entity);
                 FLIGHT.remove(entity);
                 LAUNCH_YAW.remove(entity);
                 continue;
@@ -179,6 +185,28 @@ public final class GunProjectileTracker {
             Vec3 launch = LAUNCH.get(entity);
             Vec3 now = entity.getDeltaMovement();
             Vec3 before = PRE_TICK.remove(entity);
+            // 3 级子弹：每 tick 检查扫过的范围里有没有生物，有就直接消失（伤害已在 tick 内结算）。
+            // 这样不管对方是否无敌帧、有没有被弹开，子弹都不会留在场上飞回。
+            if (POWERED.get(entity) >= 3) {
+                Vec3 prevPos = PRE_POS.get(entity);
+                AABB area = entity.getBoundingBox()
+                        .expandTowards(prevPos == null ? Vec3.ZERO : prevPos.subtract(entity.position()))
+                        .inflate(0.25D);
+                Entity owner = entity instanceof net.minecraft.world.entity.projectile.Projectile projectile
+                        ? projectile.getOwner() : null;
+                boolean touched = !level.getEntitiesOfClass(LivingEntity.class, area,
+                        living -> living.isAlive() && living != owner).isEmpty();
+                if (touched) {
+                    entity.discard();
+                    PRE_TICK.remove(entity);
+                    PRE_POS.remove(entity);
+                    POWERED.remove(entity);
+                    LAUNCH.remove(entity);
+                    LAUNCH_YAW.remove(entity);
+                    FLIGHT.remove(entity);
+                    continue;
+                }
+            }
             // 被弹开 = 速度方向反转（相对发射方向或上一 tick 速度），或速度骤降
             boolean deflected = (launch != null && now.dot(launch) < -0.01)
                     || (before != null && now.dot(before) < 0.0);
