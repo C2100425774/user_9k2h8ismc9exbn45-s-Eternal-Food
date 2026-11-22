@@ -363,7 +363,8 @@ public class EternalDispenserGunItem extends Item {
 
         int powerLevel = getPower(gun);
         boolean flame = getToggle(gun, CFG_FLAME);
-        int piercing = getPiercing(gun);
+        // 3 级是「子弹」：不穿透，命中敌人直接消失（穿透滑块在 3 级时暂时无效）
+        int piercing = powerLevel >= 3 ? 0 : getPiercing(gun);
         boolean multishot = getToggle(gun, CFG_MULTISHOT);
         boolean waterproof = getToggle(gun, CFG_WATERPROOF);
         // 

@@ -12,8 +12,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -258,5 +260,22 @@ public final class GunProjectileTracker {
         return entity.onGround()
                 || level.getBlockState(entity.blockPosition()).isSolid()
                 || entity.getDeltaMovement().lengthSqr() < 1.0E-4;
+    }
+
+    /** 3 级子弹：命中实体就消失（不管对方是否无敌帧），彻底避免被弹开。 */
+    @SubscribeEvent
+    public static void onProjectileImpact(ProjectileImpactEvent event) {
+        Entity projectile = event.getProjectile();
+        Integer level = POWERED.get(projectile);
+        if (level == null || level < 3) {
+            return;
+        }
+        if (event.getRayTraceResult() instanceof EntityHitResult) {
+            projectile.discard();
+            POWERED.remove(projectile);
+            LAUNCH.remove(projectile);
+            FLIGHT.remove(projectile);
+            PRE_TICK.remove(projectile);
+        }
     }
 }
