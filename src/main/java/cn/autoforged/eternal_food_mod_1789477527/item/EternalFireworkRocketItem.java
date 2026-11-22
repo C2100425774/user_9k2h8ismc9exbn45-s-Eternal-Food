@@ -104,22 +104,28 @@ public class EternalFireworkRocketItem extends FireworkRocketItem {
                 colors.append("—");
             }
             int shapeId = star.getByte("Type");
-            tooltip.add(Component.translatable(
-                    "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star_info",
+            net.minecraft.network.chat.MutableComponent starLine = Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star_base",
                     colors.toString(),
                     Component.translatable(
-                            "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape." + shapeId),
-                    Component.translatable(star.getBoolean("Trail")
-                            ? "tooltip.eternal_food_mod_1789477527.yes"
-                            : "tooltip.eternal_food_mod_1789477527.no"),
-                    Component.translatable(star.getBoolean("Flicker")
-                            ? "tooltip.eternal_food_mod_1789477527.yes"
-                            : "tooltip.eternal_food_mod_1789477527.no"))
-                    .withStyle(ChatFormatting.GRAY));
+                            "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape." + shapeId))
+                    .withStyle(ChatFormatting.GRAY);
+            if (star.getBoolean("Trail")) {
+                starLine.append(Component.translatable(
+                        "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.trail")
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            if (star.getBoolean("Flicker")) {
+                starLine.append(Component.translatable(
+                        "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flicker")
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            tooltip.add(starLine);
             int flight = fireworks == null ? 0 : fireworks.getByte("Flight");
-            tooltip.add(Component.translatable(
-                    "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flight",
-                    String.format(java.util.Locale.ROOT, "%.1f", (flight + 1) * 0.5))
+            // 原版烟花飞行时间写法：Flight Duration: <Flight>
+            tooltip.add(Component.translatable("item.minecraft.firework_rocket.flight")
+                    .append(net.minecraft.network.chat.CommonComponents.SPACE)
+                    .append(String.valueOf(flight))
                     .withStyle(ChatFormatting.GRAY));
             tooltip.add(Component.translatable(
                     "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.damage")

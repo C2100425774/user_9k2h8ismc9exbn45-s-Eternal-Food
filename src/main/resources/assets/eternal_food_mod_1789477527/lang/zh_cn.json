@@ -205,5 +205,8 @@
   "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.shape.4": "爆裂形",
   "tooltip.eternal_food_mod_1789477527.yes": "有",
   "tooltip.eternal_food_mod_1789477527.no": "无",
-  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flight": "飞行时长：约 %s 秒"
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flight": "飞行时长：约 %s 秒",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.star_base": "烟火之星：颜色 %s，形状 %s",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.trail": "，踪迹 有",
+  "tooltip.eternal_food_mod_1789477527.eternal_firework_missile.flicker": "，闪烁 有"
 }
