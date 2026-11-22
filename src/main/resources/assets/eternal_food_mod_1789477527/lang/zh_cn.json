@@ -210,5 +210,10 @@
   "enchantment.eternal_food_mod_1789477527.adrenaline": "肾上腺素",
   "enchantment.eternal_food_mod_1789477527.fitness": "强健体魄",
   "enchantment.eternal_food_mod_1789477527.satiety": "饱食",
-  "enchantment.eternal_food_mod_1789477527.feast": "盛宴"
+  "enchantment.eternal_food_mod_1789477527.feast": "盛宴",
+  "enchantment.eternal_food_mod_1789477527.powerful_recovery.desc": "食用时瞬间治疗并给予再生，等级越高越强、持续越久",
+  "enchantment.eternal_food_mod_1789477527.adrenaline.desc": "食用时获得力量与速度，等级越高越强、持续越久",
+  "enchantment.eternal_food_mod_1789477527.fitness.desc": "食用时获得伤害吸收与抗性提升，等级越高越强、持续越久",
+  "enchantment.eternal_food_mod_1789477527.satiety.desc": "食用时每级额外恢复 2 点饥饿值与 4 点饱和度",
+  "enchantment.eternal_food_mod_1789477527.feast.desc": "食用时获得饱和效果，每级持续 1 分钟"
 }

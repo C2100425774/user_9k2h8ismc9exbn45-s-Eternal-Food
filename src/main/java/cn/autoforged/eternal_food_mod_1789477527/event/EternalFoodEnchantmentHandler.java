@@ -11,6 +11,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -33,6 +34,25 @@ public final class EternalFoodEnchantmentHandler {
         var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem());
         return key != null && EternalFoodMod.MOD_ID.equals(key.getNamespace())
                 && stack.getItem().getFoodProperties() != null;
+    }
+
+    /** 附魔食物在物品提示里显示每个附魔的作用。 */
+    @SubscribeEvent
+    public static void onItemTooltip(ItemTooltipEvent event) {
+        ItemStack stack = event.getItemStack();
+        if (!isEternalFood(stack)) {
+            return;
+        }
+        for (var entry : ModEnchantments.ALL) {
+            Enchantment enchantment = entry.get();
+            int level = EnchantmentHelper.getItemEnchantmentLevel(enchantment, stack);
+            if (level <= 0) {
+                continue;
+            }
+            event.getToolTip().add(net.minecraft.network.chat.Component.translatable(
+                    enchantment.getDescriptionId() + ".desc")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
     }
 
     @SubscribeEvent
