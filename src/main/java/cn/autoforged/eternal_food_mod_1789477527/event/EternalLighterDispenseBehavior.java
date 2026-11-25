@@ -34,7 +34,7 @@ public class EternalLighterDispenseBehavior extends DefaultDispenseItemBehavior 
             success = EternalLighterItem.tryExtinguishBlock(source.getLevel(), front, state, null);
         }
         if (success) {
-            EternalLighterItem.damage(source.getLevel(), stack, null);
+            EternalLighterItem.consumeFuelOrDurability(source.getLevel(), stack, null);
             playSound(source);
             playAnimation(source, facing);
         }

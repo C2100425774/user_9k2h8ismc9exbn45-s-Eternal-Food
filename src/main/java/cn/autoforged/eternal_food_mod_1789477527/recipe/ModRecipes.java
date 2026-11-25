@@ -41,6 +41,10 @@ public class ModRecipes {
      * 与 {@code crafting_shapeless} 行为一致，但会把所用成品烟花火箭的 {@code Fireworks} NBT
      * 复制到结果上，让永恒烟花火箭继承合成前的所有烟花效果。
      */
+    public static final RegistryObject<RecipeSerializer<?>> LIGHTER_COMBINE_SERIALIZER =
+            RECIPE_SERIALIZERS.register("crafting_shapeless_with_lighter_fluid",
+                    LighterCombineRecipeSerializer::new);
+
     public static final RegistryObject<RecipeSerializer<?>> FIREWORK_MISSILE_SERIALIZER =
             RECIPE_SERIALIZERS.register("crafting_shapeless_with_missile_effects",
                     EternalFireworkMissileRecipeSerializer::new);

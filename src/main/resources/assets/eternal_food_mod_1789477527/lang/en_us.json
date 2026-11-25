@@ -221,5 +221,6 @@
   "tooltip.eternal_food_mod_1789477527.lighter.open": "Lid: open (can ignite)",
   "tooltip.eternal_food_mod_1789477527.lighter.closed": "Lid: closed (extinguishes campfires/stoves, cannot ignite)",
   "tooltip.eternal_food_mod_1789477527.lighter.toggle": "Shift + right-click: open/close lid (no durability cost)",
-  "tooltip.eternal_food_mod_1789477527.lighter.repair": "Does not break at 0 durability; repair with flint in crafting table/anvil/grindstone"
+  "tooltip.eternal_food_mod_1789477527.lighter.repair": "Does not break at 0 durability; repair with flint in crafting table/anvil/grindstone",
+  "tooltip.eternal_food_mod_1789477527.lighter.fluid": "Fluid: %s %s/%s mB"
 }

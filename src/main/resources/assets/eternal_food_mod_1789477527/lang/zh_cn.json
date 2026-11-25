@@ -221,5 +221,6 @@
   "tooltip.eternal_food_mod_1789477527.lighter.open": "盖子：打开（可点火）",
   "tooltip.eternal_food_mod_1789477527.lighter.closed": "盖子：关闭（可扑灭营火/炉灶，无法点火）",
   "tooltip.eternal_food_mod_1789477527.lighter.toggle": "Shift + 右键：打开/关闭盖子（本身不消耗耐久）",
-  "tooltip.eternal_food_mod_1789477527.lighter.repair": "耐久耗尽不会消失，可用燧石在工作台/铁砧/砂轮修复"
+  "tooltip.eternal_food_mod_1789477527.lighter.repair": "耐久耗尽不会消失，可用燧石在工作台/铁砧/砂轮修复",
+  "tooltip.eternal_food_mod_1789477527.lighter.fluid": "流体：%s %s/%s mB"
 }

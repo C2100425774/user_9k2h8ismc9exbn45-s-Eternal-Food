@@ -1,0 +1,15 @@
+{
+  "type": "eternal_food_mod_1789477527:crafting_shapeless_with_lighter_fluid",
+  "category": "equipment",
+  "ingredients": [
+    {
+      "item": "eternal_food_mod_1789477527:eternal_lighter"
+    },
+    {
+      "item": "eternal_food_mod_1789477527:eternal_lighter"
+    }
+  ],
+  "result": {
+    "item": "eternal_food_mod_1789477527:eternal_lighter"
+  }
+}

@@ -28,6 +28,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStack;
+import net.minecraft.tags.FluidTags;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.ChatFormatting;
 import java.util.List;
 
@@ -42,6 +52,15 @@ public class EternalLighterItem extends Item {
 
     public static final String OPEN_TAG = "LighterOpen";
     public static final int MAX_DURABILITY = 64;
+    public static final int FLUID_CAPACITY = 200;
+
+    /** 默认可燃流体标签。 */
+    private static final List<TagKey<Fluid>> FUEL_TAGS = List.of(
+            FluidTags.create(new ResourceLocation("forge", "biodiesel")),
+            FluidTags.create(new ResourceLocation("forge", "diesel")),
+            FluidTags.create(new ResourceLocation("forge", "ethanol")),
+            FluidTags.create(new ResourceLocation("forge", "gasoline")),
+            FluidTags.create(new ResourceLocation("forge", "plantoil")));
 
     public EternalLighterItem(Properties properties) {
         super(properties);
@@ -53,6 +72,52 @@ public class EternalLighterItem extends Item {
 
     private static void setOpen(ItemStack stack, boolean open) {
         stack.getOrCreateTag().putBoolean(OPEN_TAG, open);
+    }
+
+    @Override
+    public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt) {
+        return new FluidHandlerItemStack(stack, FLUID_CAPACITY) {
+            @Override
+            public boolean canFillFluidType(FluidStack fluid) {
+                return isFuel(fluid);
+            }
+        };
+    }
+
+    public static FluidStack getFluid(ItemStack stack) {
+        return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM)
+                .map(handler -> handler.getFluidInTank(0))
+                .orElse(FluidStack.EMPTY);
+    }
+
+    public static boolean isFuel(FluidStack fluid) {
+        if (fluid.isEmpty()) {
+            return false;
+        }
+        for (TagKey<Fluid> tag : FUEL_TAGS) {
+            if (fluid.getFluid().builtInRegistryHolder().is(tag)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasFuel(ItemStack stack) {
+        FluidStack fluid = getFluid(stack);
+        return !fluid.isEmpty() && isFuel(fluid) && fluid.getAmount() > 0;
+    }
+
+    /** 有点火流体就消耗 1mB，否则消耗 1 点耐久。 */
+    public static void consumeFuelOrDurability(Level level, ItemStack stack, Player player) {
+        var handler = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).resolve();
+        if (handler.isPresent()) {
+            FluidStack fluid = handler.get().getFluidInTank(0);
+            if (!fluid.isEmpty() && isFuel(fluid) && fluid.getAmount() > 0) {
+                handler.get().drain(1, IFluidHandler.FluidAction.EXECUTE);
+                return;
+            }
+        }
+        damage(level, stack, player);
     }
 
     @Override
@@ -79,12 +144,13 @@ public class EternalLighterItem extends Item {
             }
             return InteractionResult.PASS;
         }
-        if (!isCreative(player) && stack.getDamageValue() >= stack.getMaxDamage()) {
+        if (!isCreative(player) && stack.getDamageValue() >= stack.getMaxDamage()
+                && !hasFuel(stack)) {
             return InteractionResult.FAIL;
         }
         if (tryIgniteBlock(level, pos, state, player, context.getClickedFace(),
                 context.getHorizontalDirection(), false)) {
-            damage(level, stack, player);
+            consumeFuelOrDurability(level, stack, player);
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         return InteractionResult.PASS;
@@ -301,6 +367,13 @@ public class EternalLighterItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
+        FluidStack fluid = getFluid(stack);
+        if (!fluid.isEmpty()) {
+            tooltip.add(Component.translatable(
+                    "tooltip.eternal_food_mod_1789477527.lighter.fluid",
+                    fluid.getDisplayName(), fluid.getAmount(), FLUID_CAPACITY)
+                    .withStyle(ChatFormatting.AQUA));
+        }
         tooltip.add(Component.translatable(isOpen(stack)
                 ? "tooltip.eternal_food_mod_1789477527.lighter.open"
                 : "tooltip.eternal_food_mod_1789477527.lighter.closed")
