@@ -26,7 +26,7 @@ public class EternalLighterDispenseBehavior extends DefaultDispenseItemBehavior 
         BlockPos front = source.getPos().relative(facing);
         BlockState state = source.getLevel().getBlockState(front);
         if (EternalLighterItem.tryIgniteBlock(source.getLevel(), front, state, null, facing, facing)) {
-            stack.setDamageValue(Math.min(stack.getMaxDamage(), stack.getDamageValue() + 1));
+            EternalLighterItem.damage(source.getLevel(), stack);
             playSound(source);
             playAnimation(source, facing);
         }

@@ -15,6 +15,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -88,7 +89,7 @@ public class EternalLighterItem extends Item {
         }
         if (tryIgniteBlock(level, pos, state, player, context.getClickedFace(),
                 context.getHorizontalDirection())) {
-            stack.setDamageValue(Math.min(stack.getMaxDamage(), stack.getDamageValue() + 1));
+            damage(level, stack);
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         return InteractionResult.PASS;
@@ -106,6 +107,15 @@ public class EternalLighterItem extends Item {
             return net.minecraft.world.InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
         return net.minecraft.world.InteractionResultHolder.pass(stack);
+    }
+
+    /** 消耗 1 耐久；耐久附魔按原版概率抵消。 */
+    public static void damage(Level level, ItemStack stack) {
+        int unbreaking = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.UNBREAKING, stack);
+        if (unbreaking > 0 && level.getRandom().nextInt(unbreaking + 1) > 0) {
+            return;
+        }
+        stack.setDamageValue(Math.min(stack.getMaxDamage(), stack.getDamageValue() + 1));
     }
 
     /** 发射器与右键共用的点火逻辑。 */
