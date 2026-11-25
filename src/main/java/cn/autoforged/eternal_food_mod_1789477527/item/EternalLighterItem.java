@@ -143,6 +143,20 @@ public class EternalLighterItem extends Item {
             level.removeBlock(pos, false);
             return true;
         }
+        // 模组 TNT：复用其 onCaughtFire（原版 TntBlock.use 也是先调用它再移除方块）
+        if (state.getBlock().getClass().getName().toLowerCase().contains("tnt")) {
+            try {
+                Method caught = state.getBlock().getClass().getMethod("onCaughtFire",
+                        BlockState.class, Level.class, BlockPos.class, Direction.class,
+                        net.minecraft.world.entity.LivingEntity.class);
+                caught.invoke(state.getBlock(), state, level, pos, face,
+                        source instanceof net.minecraft.world.entity.LivingEntity living ? living : null);
+                level.removeBlock(pos, false);
+                return true;
+            } catch (Throwable ignored) {
+                // 没有 onCaughtFire 的模组 TNT：继续走普通点火逻辑
+            }
+        }
 
         String className = state.getBlock().getClass().getName();
 
@@ -248,9 +262,8 @@ public class EternalLighterItem extends Item {
             setter.invoke(be, stack.copyWithCount(1));
             be.setChanged();
             level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
-            if (!player.isCreative()) {
-                stack.shrink(1);
-            }
+            // 挂到架子上就是把手里的打火机放上去，创造模式也消耗
+            stack.shrink(1);
             level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 0.8F, 1.0F);
             return true;
         } catch (Throwable ignored) {
