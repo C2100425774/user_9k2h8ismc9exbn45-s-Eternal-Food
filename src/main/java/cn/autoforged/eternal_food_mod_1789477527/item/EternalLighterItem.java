@@ -246,6 +246,8 @@ public class EternalLighterItem extends Item {
             String setterName = useLeft ? "setItemLeft" : "setItemRight";
             Method setter = be.getClass().getMethod(setterName, ItemStack.class);
             setter.invoke(be, stack.copyWithCount(1));
+            be.setChanged();
+            level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
             if (!player.isCreative()) {
                 stack.shrink(1);
             }
