@@ -71,13 +71,6 @@ public class EternalLighterItem extends Item {
         }
 
         BlockState state = level.getBlockState(pos);
-        // 森罗物语：厨房的厨具架：把物品挂上去
-        if (player != null && isKitchenwareRack(level, pos)) {
-            if (hangOnRack(level, pos, player, stack)) {
-                return InteractionResult.sidedSuccess(level.isClientSide);
-            }
-        }
-
         // 合盖：像锹一样扑灭营火 / 炉灶
         if (!isOpen(stack)) {
             if (tryExtinguishBlock(level, pos, state, player)) {

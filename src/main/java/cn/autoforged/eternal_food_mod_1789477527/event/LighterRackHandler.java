@@ -28,8 +28,12 @@ public final class LighterRackHandler {
         if (!EternalLighterItem.isKitchenwareRack(event.getLevel(), event.getPos())) {
             return;
         }
-        if (EternalLighterItem.hangOnRack(event.getLevel(), event.getPos(),
-                event.getEntity(), stack)) {
+        // 直接交给厨具架自己的 use：它会按点击位置判断左右、播放动画并调用 onClick
+        var result = event.getLevel().getBlockState(event.getPos()).use(
+                event.getLevel(), event.getEntity(), event.getHand(), event.getHitVec());
+        if (result.consumesAction()) {
+            // 厨具架 onClick 只把物品复制进槽位，不扣手里数量；这里补上，创造模式也一样
+            stack.shrink(1);
             event.setUseBlock(Event.Result.DENY);
             event.setUseItem(Event.Result.DENY);
             event.setCanceled(true);
