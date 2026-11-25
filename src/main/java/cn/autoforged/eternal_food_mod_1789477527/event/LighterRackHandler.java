@@ -28,15 +28,20 @@ public final class LighterRackHandler {
         if (!EternalLighterItem.isKitchenwareRack(event.getLevel(), event.getPos())) {
             return;
         }
-        // 像厨具架自己那样，按点击位置计算左右槽
+        // 按玩家看到的左/右来选槽：以方块中心为原点，看点击点在朝向的哪一侧
         var state = event.getLevel().getBlockState(event.getPos());
         var facing = state.getValue(
-                net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING).getOpposite();
-        double radians = Math.toRadians(facing.toYRot());
-        var local = event.getHitVec().getLocation()
-                .subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(event.getPos()))
-                .yRot((float) radians);
-        boolean left = local.x > 0.0D;
+                net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING);
+        var hit = event.getHitVec().getLocation();
+        double dx = hit.x - (event.getPos().getX() + 0.5D);
+        double dz = hit.z - (event.getPos().getZ() + 0.5D);
+        boolean left = switch (facing) {
+            case NORTH -> dx > 0.0D;
+            case SOUTH -> dx < 0.0D;
+            case EAST -> dz < 0.0D;
+            case WEST -> dz > 0.0D;
+            default -> dx > 0.0D;
+        };
 
         if (EternalLighterItem.hangOnRack(event.getLevel(), event.getPos(),
                 event.getEntity(), stack, left)) {
