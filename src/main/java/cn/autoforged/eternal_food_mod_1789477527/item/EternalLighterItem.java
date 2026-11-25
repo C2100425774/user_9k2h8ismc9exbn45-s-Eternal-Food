@@ -120,6 +120,13 @@ public class EternalLighterItem extends Item {
             return true;
         }
 
+        // 原版打火石也能点燃 TNT
+        if (state.getBlock() instanceof net.minecraft.world.level.block.TntBlock tnt) {
+            tnt.onCaughtFire(state, level, pos, face,
+                    source instanceof net.minecraft.world.entity.LivingEntity living ? living : null);
+            return true;
+        }
+
         String className = state.getBlock().getClass().getName();
 
         // 农夫乐事：炉灶（需要同时点亮 BlockEntity）
