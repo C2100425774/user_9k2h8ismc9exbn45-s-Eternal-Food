@@ -38,8 +38,8 @@ public final class LighterRackHandler {
         boolean left = switch (facing) {
             case NORTH -> dx > 0.0D;
             case SOUTH -> dx < 0.0D;
-            case EAST -> dz < 0.0D;
-            case WEST -> dz > 0.0D;
+            case EAST -> dz > 0.0D;
+            case WEST -> dz < 0.0D;
             default -> dx > 0.0D;
         };
 
