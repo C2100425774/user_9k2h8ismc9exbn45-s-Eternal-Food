@@ -40,6 +40,7 @@ public final class LighterRackHandler {
 
         if (EternalLighterItem.hangOnRack(event.getLevel(), event.getPos(),
                 event.getEntity(), stack, left)) {
+            event.getEntity().getInventory().setChanged();
             event.setUseBlock(Event.Result.DENY);
             event.setUseItem(Event.Result.DENY);
             event.setCanceled(true);
