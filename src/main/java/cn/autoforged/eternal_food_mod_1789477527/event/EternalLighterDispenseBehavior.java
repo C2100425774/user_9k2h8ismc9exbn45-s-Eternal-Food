@@ -15,8 +15,7 @@ public class EternalLighterDispenseBehavior extends DefaultDispenseItemBehavior 
 
     @Override
     protected ItemStack execute(BlockSource source, ItemStack stack) {
-        if (!(stack.getItem() instanceof EternalLighterItem) || !EternalLighterItem.isOpen(stack)) {
-            // 合盖：以物品形式发射
+        if (!(stack.getItem() instanceof EternalLighterItem)) {
             return super.execute(source, stack);
         }
         if (stack.getDamageValue() >= stack.getMaxDamage()) {
@@ -25,8 +24,17 @@ public class EternalLighterDispenseBehavior extends DefaultDispenseItemBehavior 
         Direction facing = source.getBlockState().getValue(DispenserBlock.FACING);
         BlockPos front = source.getPos().relative(facing);
         BlockState state = source.getLevel().getBlockState(front);
-        if (EternalLighterItem.tryIgniteBlock(source.getLevel(), front, state, null, facing, facing)) {
-            EternalLighterItem.damage(source.getLevel(), stack);
+        boolean success;
+        if (EternalLighterItem.isOpen(stack)) {
+            // 开盖：点燃正前方（火焰就放在发射器口前一格）
+            success = EternalLighterItem.tryIgniteBlock(source.getLevel(), front, state,
+                    null, facing, facing, true);
+        } else {
+            // 合盖：扑灭正前方的营火 / 炉灶
+            success = EternalLighterItem.tryExtinguishBlock(source.getLevel(), front, state, null);
+        }
+        if (success) {
+            EternalLighterItem.damage(source.getLevel(), stack, null);
             playSound(source);
             playAnimation(source, facing);
         }

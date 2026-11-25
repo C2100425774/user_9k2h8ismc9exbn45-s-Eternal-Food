@@ -71,25 +71,27 @@ public class EternalLighterItem extends Item {
         }
 
         BlockState state = level.getBlockState(pos);
-        // 森罗物语：厨房的厨具架：把物品挂上去/取下来
+        // 森罗物语：厨房的厨具架：把物品挂上去
         if (player != null && isKitchenwareRack(level, pos)) {
-            InteractionResult result = state.use(level, player, context.getHand(),
-                    new net.minecraft.world.phys.BlockHitResult(context.getClickLocation(),
-                            context.getClickedFace(), pos, false));
-            if (result != InteractionResult.PASS) {
-                return result;
+            if (hangOnRack(level, pos, player, stack)) {
+                return InteractionResult.sidedSuccess(level.isClientSide);
             }
         }
 
+        // 合盖：像锹一样扑灭营火 / 炉灶
         if (!isOpen(stack)) {
+            if (tryExtinguishBlock(level, pos, state, player)) {
+                damage(level, stack, player);
+                return InteractionResult.sidedSuccess(level.isClientSide);
+            }
             return InteractionResult.PASS;
         }
-        if (stack.getDamageValue() >= stack.getMaxDamage()) {
+        if (!isCreative(player) && stack.getDamageValue() >= stack.getMaxDamage()) {
             return InteractionResult.FAIL;
         }
         if (tryIgniteBlock(level, pos, state, player, context.getClickedFace(),
-                context.getHorizontalDirection())) {
-            damage(level, stack);
+                context.getHorizontalDirection(), false)) {
+            damage(level, stack, player);
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         return InteractionResult.PASS;
@@ -110,7 +112,10 @@ public class EternalLighterItem extends Item {
     }
 
     /** 消耗 1 耐久；耐久附魔按原版概率抵消。 */
-    public static void damage(Level level, ItemStack stack) {
+    public static void damage(Level level, ItemStack stack, Player player) {
+        if (player != null && player.isCreative()) {
+            return;
+        }
         int unbreaking = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.UNBREAKING, stack);
         if (unbreaking > 0 && level.getRandom().nextInt(unbreaking + 1) > 0) {
             return;
@@ -120,7 +125,7 @@ public class EternalLighterItem extends Item {
 
     /** 发射器与右键共用的点火逻辑。 */
     public static boolean tryIgniteBlock(Level level, BlockPos pos, BlockState state, Entity source,
-            Direction face, Direction horizontal) {
+            Direction face, Direction horizontal, boolean fireAtPos) {
         // 原版营火 / 蜡烛 / 蜡烛蛋糕
         if (CampfireBlock.canLight(state) || CandleBlock.canLight(state)
                 || CandleCakeBlock.canLight(state)) {
@@ -134,6 +139,8 @@ public class EternalLighterItem extends Item {
         if (state.getBlock() instanceof net.minecraft.world.level.block.TntBlock tnt) {
             tnt.onCaughtFire(state, level, pos, face,
                     source instanceof net.minecraft.world.entity.LivingEntity living ? living : null);
+            // onCaughtFire 只生成引信 TNT，不会移除原方块；不移除会复制 TNT
+            level.removeBlock(pos, false);
             return true;
         }
 
@@ -172,7 +179,7 @@ public class EternalLighterItem extends Item {
         }
 
         // 原版打火石：在点击面相邻的位置放火
-        BlockPos firePos = pos.relative(face);
+        BlockPos firePos = fireAtPos ? pos : pos.relative(face);
         if (BaseFireBlock.canBePlacedAt(level, firePos, horizontal)) {
             playIgniteSound(level, pos, source);
             level.setBlock(firePos, BaseFireBlock.getState(level, firePos), 11);
@@ -180,6 +187,73 @@ public class EternalLighterItem extends Item {
             return true;
         }
         return false;
+    }
+
+    private static boolean isCreative(Player player) {
+        return player != null && player.isCreative();
+    }
+
+    /** 合盖扑灭：营火或农夫乐事/森罗物语炉灶。 */
+    public static boolean tryExtinguishBlock(Level level, BlockPos pos, BlockState state, Entity source) {
+        if (state.getBlock() instanceof CampfireBlock
+                && state.hasProperty(BlockStateProperties.LIT)
+                && state.getValue(BlockStateProperties.LIT)) {
+            CampfireBlock.dowse(source, level, pos, state);
+            level.levelEvent(1009, pos, 0);
+            level.setBlock(pos, state.setValue(BlockStateProperties.LIT, Boolean.FALSE), 11);
+            return true;
+        }
+        String className = state.getBlock().getClass().getName();
+        if (className.contains("farmersdelight") && className.contains("StoveBlock")
+                && state.hasProperty(BlockStateProperties.LIT)
+                && state.getValue(BlockStateProperties.LIT)) {
+            try {
+                Method extinguish = state.getBlock().getClass().getMethod("extinguish",
+                        Entity.class, LevelAccessor.class, BlockPos.class, BlockState.class);
+                extinguish.invoke(state.getBlock(), source, level, pos, state);
+                return true;
+            } catch (Throwable ignored) {
+                level.setBlock(pos, state.setValue(BlockStateProperties.LIT, Boolean.FALSE), 11);
+                return true;
+            }
+        }
+        if (className.contains("kaleidoscopecookery") && className.contains("StoveBlock")
+                && state.hasProperty(BlockStateProperties.LIT)
+                && state.getValue(BlockStateProperties.LIT)) {
+            level.playSound(source instanceof Player player ? player : null, pos,
+                    SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 1.0F, 1.0F);
+            level.setBlock(pos, state.setValue(BlockStateProperties.LIT, Boolean.FALSE), 11);
+            return true;
+        }
+        return false;
+    }
+
+    /** 把打火机挂到森罗物语厨具架上；成功时消耗 1 个物品。 */
+    private static boolean hangOnRack(Level level, BlockPos pos, Player player, ItemStack stack) {
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be == null) {
+            return false;
+        }
+        try {
+            Method getLeft = be.getClass().getMethod("getItemLeft");
+            Method getRight = be.getClass().getMethod("getItemRight");
+            ItemStack left = (ItemStack) getLeft.invoke(be);
+            ItemStack right = (ItemStack) getRight.invoke(be);
+            boolean useLeft = left.isEmpty();
+            if (!useLeft && !right.isEmpty()) {
+                return false;
+            }
+            String setterName = useLeft ? "setItemLeft" : "setItemRight";
+            Method setter = be.getClass().getMethod(setterName, ItemStack.class);
+            setter.invoke(be, stack.copyWithCount(1));
+            if (!player.isCreative()) {
+                stack.shrink(1);
+            }
+            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 0.8F, 1.0F);
+            return true;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     private static void playIgniteSound(Level level, BlockPos pos, Entity source) {
