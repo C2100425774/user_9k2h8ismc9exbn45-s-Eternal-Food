@@ -209,6 +209,12 @@ public class EternalLighterItem extends Item {
 
     /** 合盖扑灭：营火或农夫乐事/森罗物语炉灶。 */
     public static boolean tryExtinguishBlock(Level level, BlockPos pos, BlockState state, Entity source) {
+        // 火焰方块：合盖直接扑灭
+        if (state.getBlock() instanceof BaseFireBlock) {
+            level.removeBlock(pos, false);
+            level.levelEvent(1009, pos, 0);
+            return true;
+        }
         if (state.getBlock() instanceof CampfireBlock
                 && state.hasProperty(BlockStateProperties.LIT)
                 && state.getValue(BlockStateProperties.LIT)) {
@@ -242,11 +248,27 @@ public class EternalLighterItem extends Item {
         return false;
     }
 
-    /** 把打火机挂到森罗物语厨具架上；成功时消耗 1 个物品。 */
-    private static boolean hangOnRack(Level level, BlockPos pos, Player player, ItemStack stack) {
+    /** 把打火机挂到森罗物语厨具架上；优先调用厨具架自己的 onClick，再兜底写槽。 */
+    public static boolean hangOnRack(Level level, BlockPos pos, Player player, ItemStack stack) {
         BlockEntity be = level.getBlockEntity(pos);
         if (be == null) {
             return false;
+        }
+        try {
+            // 复用森罗物语自己的挂载逻辑（会检查 forge:tools 并播放音效）
+            Method onClick = be.getClass().getMethod("onClick",
+                    net.minecraft.world.entity.LivingEntity.class, ItemStack.class, boolean.class);
+            for (boolean left : new boolean[]{true, false}) {
+                Object result = onClick.invoke(be, player, stack, left);
+                if (result instanceof Boolean success && success) {
+                    stack.shrink(1);
+                    be.setChanged();
+                    level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
+                    return true;
+                }
+            }
+        } catch (Throwable ignored) {
+            // 版本差异时走兜底
         }
         try {
             Method getLeft = be.getClass().getMethod("getItemLeft");
@@ -277,7 +299,7 @@ public class EternalLighterItem extends Item {
                 level.getRandom().nextFloat() * 0.4F + 0.8F);
     }
 
-    private static boolean isKitchenwareRack(Level level, BlockPos pos) {
+    public static boolean isKitchenwareRack(Level level, BlockPos pos) {
         BlockEntity be = level.getBlockEntity(pos);
         return be != null && be.getClass().getName().contains("KitchenwareRacksBlockEntity");
     }
