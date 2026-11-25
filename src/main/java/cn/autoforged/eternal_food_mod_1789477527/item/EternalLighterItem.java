@@ -241,38 +241,20 @@ public class EternalLighterItem extends Item {
         return false;
     }
 
-    /** 把打火机挂到森罗物语厨具架上；优先调用厨具架自己的 onClick，再兜底写槽。 */
-    public static boolean hangOnRack(Level level, BlockPos pos, Player player, ItemStack stack) {
+    /** 直接写厨具架的左/右槽；side 由点击位置计算，和厨具架自己的判断一致。 */
+    public static boolean hangOnRack(Level level, BlockPos pos, Player player, ItemStack stack, boolean left) {
         BlockEntity be = level.getBlockEntity(pos);
         if (be == null) {
             return false;
         }
         try {
-            // 复用森罗物语自己的挂载逻辑（会检查 forge:tools 并播放音效）
-            Method onClick = be.getClass().getMethod("onClick",
-                    net.minecraft.world.entity.LivingEntity.class, ItemStack.class, boolean.class);
-            for (boolean left : new boolean[]{true, false}) {
-                Object result = onClick.invoke(be, player, stack, left);
-                if (result instanceof Boolean success && success) {
-                    stack.shrink(1);
-                    be.setChanged();
-                    level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
-                    return true;
-                }
-            }
-        } catch (Throwable ignored) {
-            // 版本差异时走兜底
-        }
-        try {
-            Method getLeft = be.getClass().getMethod("getItemLeft");
-            Method getRight = be.getClass().getMethod("getItemRight");
-            ItemStack left = (ItemStack) getLeft.invoke(be);
-            ItemStack right = (ItemStack) getRight.invoke(be);
-            boolean useLeft = left.isEmpty();
-            if (!useLeft && !right.isEmpty()) {
+            String getterName = left ? "getItemLeft" : "getItemRight";
+            Method getter = be.getClass().getMethod(getterName);
+            ItemStack current = (ItemStack) getter.invoke(be);
+            if (!current.isEmpty()) {
                 return false;
             }
-            String setterName = useLeft ? "setItemLeft" : "setItemRight";
+            String setterName = left ? "setItemLeft" : "setItemRight";
             Method setter = be.getClass().getMethod(setterName, ItemStack.class);
             setter.invoke(be, stack.copyWithCount(1));
             be.setChanged();

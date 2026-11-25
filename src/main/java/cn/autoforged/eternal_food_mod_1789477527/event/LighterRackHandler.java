@@ -28,12 +28,18 @@ public final class LighterRackHandler {
         if (!EternalLighterItem.isKitchenwareRack(event.getLevel(), event.getPos())) {
             return;
         }
-        // 直接交给厨具架自己的 use：它会按点击位置判断左右、播放动画并调用 onClick
-        var result = event.getLevel().getBlockState(event.getPos()).use(
-                event.getLevel(), event.getEntity(), event.getHand(), event.getHitVec());
-        if (result.consumesAction()) {
-            // 厨具架 onClick 只把物品复制进槽位，不扣手里数量；这里补上，创造模式也一样
-            stack.shrink(1);
+        // 像厨具架自己那样，按点击位置计算左右槽
+        var state = event.getLevel().getBlockState(event.getPos());
+        var facing = state.getValue(
+                net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING).getOpposite();
+        double radians = Math.toRadians(facing.toYRot());
+        var local = event.getHitVec().getLocation()
+                .subtract(net.minecraft.world.phys.Vec3.atLowerCornerOf(event.getPos()))
+                .yRot((float) radians);
+        boolean left = local.x > 0.0D;
+
+        if (EternalLighterItem.hangOnRack(event.getLevel(), event.getPos(),
+                event.getEntity(), stack, left)) {
             event.setUseBlock(Event.Result.DENY);
             event.setUseItem(Event.Result.DENY);
             event.setCanceled(true);
