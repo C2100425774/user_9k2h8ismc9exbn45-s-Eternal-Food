@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "eternal_food_mod_1789477527:item/eternal_lighter_open"
+  }
+}

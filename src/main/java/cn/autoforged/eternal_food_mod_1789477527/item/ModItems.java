@@ -306,6 +306,10 @@ public class ModItems {
     public static final RegistryObject<Item> ETERNAL_DISPENSER_GUN = ITEMS.register("eternal_dispenser_gun",
             () -> new EternalDispenserGunItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
 
+    // 打火机：64 耐久，开盖点火，合盖可当物品发射；耐久耗尽不消失，燧石修复。
+    public static final RegistryObject<Item> ETERNAL_LIGHTER = ITEMS.register("eternal_lighter",
+            () -> new EternalLighterItem(new Item.Properties().stacksTo(1).durability(64).rarity(Rarity.COMMON)));
+
     private static RegistryObject<Item> projectile(String name, EternalProjectileItem.Kind kind) {
         return ITEMS.register(name,
                 () -> new EternalProjectileItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE), kind));

@@ -1,0 +1,14 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "eternal_food_mod_1789477527:item/eternal_lighter"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "eternal_food_mod_1789477527:open": 1.0
+      },
+      "model": "eternal_food_mod_1789477527:item/eternal_lighter_open"
+    }
+  ]
+}

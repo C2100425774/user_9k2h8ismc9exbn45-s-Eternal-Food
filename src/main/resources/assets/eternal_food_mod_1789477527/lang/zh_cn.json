@@ -216,5 +216,10 @@
   "enchantment.eternal_food_mod_1789477527.fitness.desc": "食用时获得伤害吸收与抗性提升，等级越高越强、持续越久",
   "enchantment.eternal_food_mod_1789477527.satiety.desc": "食用时每级额外恢复 2 点饥饿值与 4 点饱和度",
   "enchantment.eternal_food_mod_1789477527.feast.desc": "食用时获得饱和效果，每级持续 1 分钟",
-  "enchantment.eternal_food_mod_1789477527.satiety.tooltip": "恢复 %s 点饥饿值和 %s 点饱和度"
+  "enchantment.eternal_food_mod_1789477527.satiety.tooltip": "恢复 %s 点饥饿值和 %s 点饱和度",
+  "item.eternal_food_mod_1789477527.eternal_lighter": "打火机",
+  "tooltip.eternal_food_mod_1789477527.lighter.open": "盖子：打开（可点火）",
+  "tooltip.eternal_food_mod_1789477527.lighter.closed": "盖子：关闭（无法点火）",
+  "tooltip.eternal_food_mod_1789477527.lighter.toggle": "Shift + 右键：打开/关闭盖子",
+  "tooltip.eternal_food_mod_1789477527.lighter.repair": "耐久耗尽不会消失，可用燧石在工作台/铁砧/砂轮修复"
 }
