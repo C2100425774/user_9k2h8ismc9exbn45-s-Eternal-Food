@@ -209,6 +209,39 @@ public class EternalLighterItem extends Item {
         stack.setDamageValue(Math.min(stack.getMaxDamage(), stack.getDamageValue() + 1));
     }
 
+    /** 沿继承链判断类名是否同时包含片段（用于识别附属模组继承的炉灶）。 */
+    private static boolean extendsNamed(Object object, String... fragments) {
+        if (object == null) {
+            return false;
+        }
+        Class<?> type = object.getClass();
+        while (type != null && type != Object.class) {
+            String name = type.getName().toLowerCase();
+            boolean all = true;
+            for (String fragment : fragments) {
+                if (!name.contains(fragment)) {
+                    all = false;
+                    break;
+                }
+            }
+            if (all) {
+                return true;
+            }
+            type = type.getSuperclass();
+        }
+        return false;
+    }
+
+    private static boolean isFarmersDelightStove(Level level, BlockPos pos, BlockState state) {
+        return extendsNamed(state.getBlock(), "farmersdelight", "stove")
+                || extendsNamed(level.getBlockEntity(pos), "farmersdelight", "stove");
+    }
+
+    private static boolean isKaleidoscopeStove(Level level, BlockPos pos, BlockState state) {
+        return extendsNamed(state.getBlock(), "kaleidoscopecookery", "stove")
+                || extendsNamed(level.getBlockEntity(pos), "kaleidoscopecookery", "stove");
+    }
+
     /** 发射器与右键共用的点火逻辑。 */
     public static boolean tryIgniteBlock(Level level, BlockPos pos, BlockState state, Entity source,
             Direction face, Direction horizontal, boolean fireAtPos) {
@@ -244,10 +277,8 @@ public class EternalLighterItem extends Item {
             }
         }
 
-        String className = state.getBlock().getClass().getName();
-
         // 农夫乐事：炉灶（需要同时点亮 BlockEntity）
-        if (className.contains("farmersdelight") && className.contains("StoveBlock")) {
+        if (isFarmersDelightStove(level, pos, state)) {
             if (!state.hasProperty(BlockStateProperties.LIT)
                     || state.getValue(BlockStateProperties.LIT)) {
                 return false;
@@ -267,7 +298,7 @@ public class EternalLighterItem extends Item {
         }
 
         // 森罗物语：厨房炉灶
-        if (className.contains("kaleidoscopecookery") && className.contains("StoveBlock")) {
+        if (isKaleidoscopeStove(level, pos, state)) {
             if (!state.hasProperty(BlockStateProperties.LIT)
                     || state.getValue(BlockStateProperties.LIT)) {
                 return false;
@@ -309,8 +340,7 @@ public class EternalLighterItem extends Item {
             level.setBlock(pos, state.setValue(BlockStateProperties.LIT, Boolean.FALSE), 11);
             return true;
         }
-        String className = state.getBlock().getClass().getName();
-        if (className.contains("farmersdelight") && className.contains("StoveBlock")
+        if (isFarmersDelightStove(level, pos, state)
                 && state.hasProperty(BlockStateProperties.LIT)
                 && state.getValue(BlockStateProperties.LIT)) {
             try {
@@ -323,7 +353,7 @@ public class EternalLighterItem extends Item {
                 return true;
             }
         }
-        if (className.contains("kaleidoscopecookery") && className.contains("StoveBlock")
+        if (isKaleidoscopeStove(level, pos, state)
                 && state.hasProperty(BlockStateProperties.LIT)
                 && state.getValue(BlockStateProperties.LIT)) {
             level.playSound(source instanceof Player player ? player : null, pos,
