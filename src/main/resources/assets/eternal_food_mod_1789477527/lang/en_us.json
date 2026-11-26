@@ -217,10 +217,12 @@
   "enchantment.eternal_food_mod_1789477527.satiety.desc": "When eaten: +2 hunger and +4 saturation per level",
   "enchantment.eternal_food_mod_1789477527.feast.desc": "When eaten: Saturation for 1 minute per level",
   "enchantment.eternal_food_mod_1789477527.satiety.tooltip": "Restores %s hunger and %s saturation",
-  "item.eternal_food_mod_1789477527.eternal_lighter": "Lighter",
+  "item.eternal_food_mod_1789477527.eternal_lighter": "Flint Lighter",
   "tooltip.eternal_food_mod_1789477527.lighter.open": "Lid: open (can ignite)",
   "tooltip.eternal_food_mod_1789477527.lighter.closed": "Lid: closed (extinguishes campfires/stoves, cannot ignite)",
   "tooltip.eternal_food_mod_1789477527.lighter.toggle": "Shift + right-click: open/close lid (no durability cost)",
   "tooltip.eternal_food_mod_1789477527.lighter.repair": "Does not break at 0 durability; repair with flint in crafting table/anvil/grindstone",
-  "tooltip.eternal_food_mod_1789477527.lighter.fluid": "Fluid: %s %s/%s mB"
+  "tooltip.eternal_food_mod_1789477527.lighter.fluid": "Fluid: %s %s/%s mB",
+  "item.eternal_food_mod_1789477527.liquid_lighter": "Liquid Lighter",
+  "tooltip.eternal_food_mod_1789477527.lighter.liquid_hint": "No durability; the liquid lighter cannot be enchanted or repaired"
 }

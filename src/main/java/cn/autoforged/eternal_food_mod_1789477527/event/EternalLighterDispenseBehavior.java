@@ -26,15 +26,23 @@ public class EternalLighterDispenseBehavior extends DefaultDispenseItemBehavior 
         BlockState state = source.getLevel().getBlockState(front);
         boolean success;
         if (EternalLighterItem.isOpen(stack)) {
+            if (EternalLighterItem.isFluidLighter(stack) && !EternalLighterItem.hasFuel(stack)) {
+                return stack;
+            }
             // 开盖：点燃正前方（火焰就放在发射器口前一格）
             success = EternalLighterItem.tryIgniteBlock(source.getLevel(), front, state,
                     null, facing, facing, true);
+            if (success) {
+                success = EternalLighterItem.consumeIgnition(source.getLevel(), stack, null);
+            }
         } else {
-            // 合盖：扑灭正前方的营火 / 炉灶
+            // 合盖：扑灭正前方的营火 / 炉灶；液体打火机免费
             success = EternalLighterItem.tryExtinguishBlock(source.getLevel(), front, state, null);
+            if (success && EternalLighterItem.isDurableLighter(stack)) {
+                EternalLighterItem.damage(source.getLevel(), stack, null);
+            }
         }
         if (success) {
-            EternalLighterItem.consumeFuelOrDurability(source.getLevel(), stack, null);
             playSound(source);
             playAnimation(source, facing);
         }

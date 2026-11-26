@@ -35,30 +35,39 @@ public class LighterCombineRecipe extends ShapelessRecipe {
             return false;
         }
         ItemStack first = null;
+        boolean firstFluid = false;
         int lighters = 0;
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
-            if (stack.is(ModItems.ETERNAL_LIGHTER.get())) {
+            if (EternalLighterItem.isDurableLighter(stack) || EternalLighterItem.isFluidLighter(stack)) {
                 lighters++;
                 if (first == null) {
                     first = stack;
+                    firstFluid = EternalLighterItem.isFluidLighter(stack);
                 }
             }
         }
         if (lighters != 2 || first == null) {
             return false;
         }
-        FluidStack firstFluid = EternalLighterItem.getFluid(first);
+        FluidStack firstFluidStack = EternalLighterItem.getFluid(first);
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
-            if (stack == first || !stack.is(ModItems.ETERNAL_LIGHTER.get())) {
+            if (stack == first || (!EternalLighterItem.isDurableLighter(stack)
+                    && !EternalLighterItem.isFluidLighter(stack))) {
+                continue;
+            }
+            if (EternalLighterItem.isFluidLighter(stack) != firstFluid) {
+                return false;
+            }
+            if (!firstFluid) {
                 continue;
             }
             FluidStack other = EternalLighterItem.getFluid(stack);
-            if (firstFluid.isEmpty() != other.isEmpty()) {
+            if (firstFluidStack.isEmpty() != other.isEmpty()) {
                 return false;
             }
-            if (!firstFluid.isEmpty() && !firstFluid.isFluidEqual(other)) {
+            if (!firstFluidStack.isEmpty() && !firstFluidStack.isFluidEqual(other)) {
                 return false;
             }
         }
@@ -71,7 +80,7 @@ public class LighterCombineRecipe extends ShapelessRecipe {
         FluidStack total = FluidStack.EMPTY;
         for (int i = 0; i < container.getContainerSize(); i++) {
             ItemStack stack = container.getItem(i);
-            if (!stack.is(ModItems.ETERNAL_LIGHTER.get())) {
+            if (!EternalLighterItem.isFluidLighter(stack)) {
                 continue;
             }
             FluidStack fluid = EternalLighterItem.getFluid(stack);

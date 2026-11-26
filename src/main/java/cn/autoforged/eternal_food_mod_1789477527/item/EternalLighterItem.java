@@ -62,8 +62,21 @@ public class EternalLighterItem extends Item {
             FluidTags.create(new ResourceLocation("forge", "gasoline")),
             FluidTags.create(new ResourceLocation("forge", "plantoil")));
 
-    public EternalLighterItem(Properties properties) {
+    private final boolean fluidEnabled;
+    private final boolean durable;
+
+    public EternalLighterItem(Properties properties, boolean fluidEnabled, boolean durable) {
         super(properties);
+        this.fluidEnabled = fluidEnabled;
+        this.durable = durable;
+    }
+
+    public static boolean isFluidLighter(ItemStack stack) {
+        return stack.getItem() instanceof EternalLighterItem item && item.fluidEnabled;
+    }
+
+    public static boolean isDurableLighter(ItemStack stack) {
+        return stack.getItem() instanceof EternalLighterItem item && item.durable;
     }
 
     public static boolean isOpen(ItemStack stack) {
@@ -76,6 +89,9 @@ public class EternalLighterItem extends Item {
 
     @Override
     public ICapabilityProvider initCapabilities(ItemStack stack, CompoundTag nbt) {
+        if (!this.fluidEnabled) {
+            return null;
+        }
         return new FluidHandlerItemStack(stack, FLUID_CAPACITY) {
             @Override
             public boolean canFillFluidType(FluidStack fluid) {
@@ -107,17 +123,21 @@ public class EternalLighterItem extends Item {
         return !fluid.isEmpty() && isFuel(fluid) && fluid.getAmount() > 0;
     }
 
-    /** 有点火流体就消耗 1mB，否则消耗 1 点耐久。 */
-    public static void consumeFuelOrDurability(Level level, ItemStack stack, Player player) {
-        var handler = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).resolve();
-        if (handler.isPresent()) {
-            FluidStack fluid = handler.get().getFluidInTank(0);
-            if (!fluid.isEmpty() && isFuel(fluid) && fluid.getAmount() > 0) {
-                handler.get().drain(1, IFluidHandler.FluidAction.EXECUTE);
-                return;
+    /** 液体打火机消耗 1mB；燧石打火机消耗 1 点耐久。返回是否可以使用。 */
+    public static boolean consumeIgnition(Level level, ItemStack stack, Player player) {
+        if (isFluidLighter(stack)) {
+            var handler = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).resolve();
+            if (handler.isPresent()) {
+                FluidStack fluid = handler.get().getFluidInTank(0);
+                if (!fluid.isEmpty() && isFuel(fluid) && fluid.getAmount() > 0) {
+                    handler.get().drain(1, IFluidHandler.FluidAction.EXECUTE);
+                    return true;
+                }
             }
+            return false;
         }
         damage(level, stack, player);
+        return true;
     }
 
     @Override
@@ -139,18 +159,26 @@ public class EternalLighterItem extends Item {
         // 合盖：像锹一样扑灭营火 / 炉灶
         if (!isOpen(stack)) {
             if (tryExtinguishBlock(level, pos, state, player)) {
-                damage(level, stack, player);
+                // 液体打火机扑灭免费；燧石打火机消耗 1 耐久
+                if (isDurableLighter(stack)) {
+                    damage(level, stack, player);
+                }
                 return InteractionResult.sidedSuccess(level.isClientSide);
             }
             return InteractionResult.PASS;
         }
-        if (!isCreative(player) && stack.getDamageValue() >= stack.getMaxDamage()
-                && !hasFuel(stack)) {
+        if (isFluidLighter(stack)) {
+            if (!hasFuel(stack)) {
+                return InteractionResult.FAIL;
+            }
+        } else if (!isCreative(player) && stack.getDamageValue() >= stack.getMaxDamage()) {
             return InteractionResult.FAIL;
         }
         if (tryIgniteBlock(level, pos, state, player, context.getClickedFace(),
                 context.getHorizontalDirection(), false)) {
-            consumeFuelOrDurability(level, stack, player);
+            if (!consumeIgnition(level, stack, player)) {
+                return InteractionResult.FAIL;
+            }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
         return InteractionResult.PASS;
@@ -347,28 +375,32 @@ public class EternalLighterItem extends Item {
 
     @Override
     public boolean isEnchantable(ItemStack stack) {
-        return true;
+        return this.durable;
     }
 
     @Override
     public int getEnchantmentValue() {
-        return 15;
+        return this.durable ? 15 : 0;
     }
 
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack, Enchantment enchantment) {
-        return enchantment == Enchantments.UNBREAKING || enchantment == Enchantments.MENDING;
+        if (!this.durable) {
+            return false;
+        }
+        // 和原版打火石共用同一套附魔判断，兼容其它模组给打火石加的附魔
+        return enchantment.canApplyAtEnchantingTable(new ItemStack(Items.FLINT_AND_STEEL));
     }
 
     @Override
     public boolean isValidRepairItem(ItemStack stack, ItemStack repair) {
-        return repair.is(Items.FLINT);
+        return this.durable && repair.is(Items.FLINT);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
         FluidStack fluid = getFluid(stack);
-        if (!fluid.isEmpty()) {
+        if (this.fluidEnabled && !fluid.isEmpty()) {
             tooltip.add(Component.translatable(
                     "tooltip.eternal_food_mod_1789477527.lighter.fluid",
                     fluid.getDisplayName(), fluid.getAmount(), FLUID_CAPACITY)
@@ -380,7 +412,12 @@ public class EternalLighterItem extends Item {
                 .withStyle(ChatFormatting.GOLD));
         tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.lighter.toggle")
                 .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.lighter.repair")
-                .withStyle(ChatFormatting.DARK_GRAY));
+        if (this.durable) {
+            tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.lighter.repair")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        } else {
+            tooltip.add(Component.translatable("tooltip.eternal_food_mod_1789477527.lighter.liquid_hint")
+                    .withStyle(ChatFormatting.DARK_GRAY));
+        }
     }
 }

@@ -271,6 +271,8 @@ public class ModDispenseBehaviors {
         // 打火机：开盖点火，合盖按普通物品发射
         event.enqueueWork(() -> DispenserBlock.registerBehavior(ModItems.ETERNAL_LIGHTER.get(),
                 new EternalLighterDispenseBehavior()));
+        event.enqueueWork(() -> DispenserBlock.registerBehavior(ModItems.LIQUID_LIGHTER.get(),
+                new EternalLighterDispenseBehavior()));
 
         // 永恒刷怪蛋：与原版刷怪蛋发射器行为一致（按类型生成生物、沿朝向偏移），但不消耗。
         DefaultDispenseItemBehavior eternalSpawnEggBehavior = new DefaultDispenseItemBehavior() {

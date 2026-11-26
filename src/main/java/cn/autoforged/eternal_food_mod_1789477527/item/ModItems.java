@@ -307,8 +307,15 @@ public class ModItems {
             () -> new EternalDispenserGunItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)));
 
     // 打火机：64 耐久，开盖点火，合盖可当物品发射；耐久耗尽不消失，燧石修复。
+    // 燧石打火机：64 耐久、可附魔、可修复。
     public static final RegistryObject<Item> ETERNAL_LIGHTER = ITEMS.register("eternal_lighter",
-            () -> new EternalLighterItem(new Item.Properties().stacksTo(1).durability(64).rarity(Rarity.COMMON)));
+            () -> new EternalLighterItem(new Item.Properties().stacksTo(1).durability(64).rarity(Rarity.COMMON),
+                    false, true));
+
+    // 液体打火机：200mB 流体、无耐久、不可附魔/修复。
+    public static final RegistryObject<Item> LIQUID_LIGHTER = ITEMS.register("liquid_lighter",
+            () -> new EternalLighterItem(new Item.Properties().stacksTo(1).rarity(Rarity.RARE),
+                    true, false));
 
     private static RegistryObject<Item> projectile(String name, EternalProjectileItem.Kind kind) {
         return ITEMS.register(name,

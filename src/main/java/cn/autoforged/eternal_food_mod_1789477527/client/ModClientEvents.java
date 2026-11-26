@@ -75,6 +75,10 @@ public class ModClientEvents {
                 new ResourceLocation(EternalFoodMod.MOD_ID, "open"),
                 (stack, level, entity, seed) ->
                         cn.autoforged.eternal_food_mod_1789477527.item.EternalLighterItem.isOpen(stack) ? 1.0F : 0.0F));
+        event.enqueueWork(() -> ItemProperties.register(ModItems.LIQUID_LIGHTER.get(),
+                new ResourceLocation(EternalFoodMod.MOD_ID, "open"),
+                (stack, level, entity, seed) ->
+                        cn.autoforged.eternal_food_mod_1789477527.item.EternalLighterItem.isOpen(stack) ? 1.0F : 0.0F));
         event.enqueueWork(() -> ItemProperties.register(Items.CROSSBOW,
                 new ResourceLocation("firework"),
                 (stack, level, entity, seed) -> CrossbowItem.isCharged(stack)
