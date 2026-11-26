@@ -23,7 +23,6 @@ import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.CandleBlock;
 import net.minecraft.world.level.block.CandleCakeBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -335,43 +334,12 @@ public class EternalLighterItem extends Item {
         return false;
     }
 
-    /** 直接写厨具架的左/右槽；side 由点击位置计算，和厨具架自己的判断一致。 */
-    public static boolean hangOnRack(Level level, BlockPos pos, Player player, ItemStack stack, boolean left) {
-        BlockEntity be = level.getBlockEntity(pos);
-        if (be == null) {
-            return false;
-        }
-        try {
-            String getterName = left ? "getItemLeft" : "getItemRight";
-            Method getter = be.getClass().getMethod(getterName);
-            ItemStack current = (ItemStack) getter.invoke(be);
-            if (!current.isEmpty()) {
-                return false;
-            }
-            String setterName = left ? "setItemLeft" : "setItemRight";
-            Method setter = be.getClass().getMethod(setterName, ItemStack.class);
-            setter.invoke(be, stack.copyWithCount(1));
-            be.setChanged();
-            level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
-            // 挂到架子上就是把手里的打火机放上去，创造模式也消耗
-            stack.shrink(1);
-            level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 0.8F, 1.0F);
-            return true;
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
     private static void playIgniteSound(Level level, BlockPos pos, Entity source) {
         level.playSound(source instanceof Player player ? player : null, pos,
                 SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F,
                 level.getRandom().nextFloat() * 0.4F + 0.8F);
     }
 
-    public static boolean isKitchenwareRack(Level level, BlockPos pos) {
-        BlockEntity be = level.getBlockEntity(pos);
-        return be != null && be.getClass().getName().contains("KitchenwareRacksBlockEntity");
-    }
 
     @Override
     public boolean isEnchantable(ItemStack stack) {
@@ -390,6 +358,11 @@ public class EternalLighterItem extends Item {
         }
         // 和原版打火石共用同一套附魔判断，兼容其它模组给打火石加的附魔
         return enchantment.canApplyAtEnchantingTable(new ItemStack(Items.FLINT_AND_STEEL));
+    }
+
+    @Override
+    public boolean isBookEnchantable(ItemStack stack, ItemStack book) {
+        return this.durable;
     }
 
     @Override

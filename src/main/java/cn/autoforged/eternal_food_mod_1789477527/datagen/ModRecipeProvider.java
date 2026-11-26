@@ -183,7 +183,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .pattern("RXR")
                 .pattern("GBG")
                 .define('D', Items.DIAMOND)
-                .define('I', Items.IRON_BLOCK)
+                .define('I', Items.NETHER_STAR)
                 .define('R', Items.REDSTONE)
                 .define('X', Items.DISPENSER)
                 .define('G', Items.GUNPOWDER)
